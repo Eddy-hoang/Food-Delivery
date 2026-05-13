@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Food Delivery App</string>
+    <string name="splash_header">Are you hungry?</string>
+    <string name="splash_subtext">Burger will deliver the treat</string>
+    <string name="splash_btn_text">Let\'s order a meal</string>
+    <string name="sign_in_text">Sign to continue</string>
+    <string name="guest_text">Browse as guest</string>
+
 </resources>
