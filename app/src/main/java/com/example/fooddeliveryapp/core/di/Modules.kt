@@ -1,5 +1,33 @@
 package com.example.fooddeliveryapp.core.di
 
+import com.example.fooddeliveryapp.R
+import com.example.fooddeliveryapp.core.data.auth.GoogleUiClient
+import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
+import com.example.fooddeliveryapp.core.data.repoImpl.CustomerRepoImpl
+import com.example.fooddeliveryapp.feature.auth.AuthViewModel
+import com.google.firebase.auth.FirebaseAuth
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val appModule = module {}
+val appModule = module {
+
+    single<FirebaseAuth> { FirebaseAuth.getInstance() }
+
+    single<CustomerRepository> { CustomerRepoImpl() }
+
+    viewModel {
+        AuthViewModel(
+            customerRepository = get<CustomerRepository>(),
+            auth = get<FirebaseAuth>()
+        )
+    }
+
+    single {
+        GoogleUiClient(
+            context = androidContext(),
+            auth = get<FirebaseAuth>(),
+            serverClient = androidContext().getString(R.string.default_web_client_id)
+        )
+    }
+}

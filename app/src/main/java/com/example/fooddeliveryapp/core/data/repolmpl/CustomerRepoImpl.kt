@@ -1,4 +1,4 @@
-package com.example.fooddeliveryapp.core.data.repolmpl
+package com.example.fooddeliveryapp.core.data.repoImpl
 
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
 import com.example.fooddeliveryapp.core.data.models.Customer
@@ -8,12 +8,12 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
 
-class CustomerRepolmpl : CustomerRepository {
+class CustomerRepoImpl : CustomerRepository {
     override fun getCurrentUserId(): String? =
         FirebaseAuth.getInstance().currentUser?.uid
 
 
-    override suspend fun CreateCustomer(user: FirebaseUser): Result<Unit> = runCatching {
+    override suspend fun createCustomer(user: FirebaseUser): Result<Unit> = runCatching {
         val customerCollection = Firebase.firestore.collection("customer")
         val docRef = customerCollection.document(user.uid)
         val snapshot = docRef.get().await()

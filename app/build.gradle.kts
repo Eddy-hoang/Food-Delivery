@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.stephennnamani.burgerrestaurantapp"
+    namespace = "com.example.fooddeliveryapp"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.stephennnamani.burgerrestaurantapp"
+        applicationId = "com.example.fooddeliveryapp"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

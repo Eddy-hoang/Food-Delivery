@@ -11,6 +11,7 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
+import androidx.credentials.ClearCredentialStateRequest
 
 class GoogleUiClient(
     private val context: Context,
@@ -46,4 +47,14 @@ class GoogleUiClient(
         val firebaseCred = GoogleAuthProvider.getCredential(idToken, null)
         return auth.signInWithCredential(firebaseCred).await()
     }
+    suspend fun guestSign(): AuthResult =
+        auth.signInAnonymously().await()
+
+    suspend fun signOut(){
+        auth.signOut()
+        runCatching {
+            credManager.clearCredentialState(ClearCredentialStateRequest())
+        }
+    }
+    val currentUser get() = auth.currentUser
 }

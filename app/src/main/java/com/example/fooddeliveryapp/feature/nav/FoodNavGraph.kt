@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.fooddeliveryapp.feature.splash.SplashScreen
 import com.example.fooddeliveryapp.feature.auth.AuthScreen
+import com.example.fooddeliveryapp.feature.home.HomeScreen
 
 @Composable
 fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen){
@@ -21,11 +22,26 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen){
                     navController.navigate(Screens.AuthScreen){
                         popUpTo<Screens.SplashScreen>{inclusive = true}
                     }
+                },
+                navigaToHome = {
+                    navController.navigate(Screens.HomeGraph){
+                        popUpTo<Screens.SplashScreen> { inclusive = true }
+                    }
                 }
             )
         }
         composable<Screens.AuthScreen>{
-            AuthScreen()
+            AuthScreen(
+                navigateToHome = {
+                    navController.navigate(Screens.HomeGraph){
+                        popUpTo<Screens.AuthScreen> {   inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable<Screens.HomeGraph> {
+            HomeScreen()
         }
     }
 }

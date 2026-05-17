@@ -1,7 +1,7 @@
 [versions]
 agp = "8.7.3"
-kotlin = "2.1.0"
-ksp = "2.1.0-1.0.29"
+kotlin = "2.1.21"
+ksp = "2.1.21-2.0.2"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -21,11 +21,11 @@ google = "4.4.2"
 serialization = "1.7.3"
 navigationCompose = "2.8.5"
 googleGmsGoogleServices = "4.4.4"
-firebaseAuth = "24.1.0"
+firebaseAuth = "24.0.0"
 credentials = "1.6.0"
 credentialsPlayServicesAuth = "1.6.0"
 googleid = "1.2.0"
-firebaseFirestore = "26.3.0"
+firebaseFirestore = "26.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

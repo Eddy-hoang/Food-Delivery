@@ -35,31 +35,40 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.Navigator
+import com.example.fooddeliveryapp.R
+import com.example.fooddeliveryapp.core.data.auth.GoogleUiClient
 import com.example.fooddeliveryapp.ui.theme.BrandBrown
 import com.example.fooddeliveryapp.ui.theme.BrandYellow
 import com.example.fooddeliveryapp.ui.theme.FontSize
 import com.example.fooddeliveryapp.ui.theme.TextWhite
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
 import com.example.fooddeliveryapp.ui.theme.sentientVariable
-import com.stephennnamani.burgerrestaurantapp.R
+import com.google.firebase.auth.FirebaseAuth
+import org.koin.compose.koinInject
 
 @Composable
 fun SplashScreen(
-    navigaToAuth: ()-> Unit
+    navigaToAuth: () -> Unit,
+    navigaToHome: () -> Unit
 ) {
+    val googleAuthUiClient: GoogleUiClient = koinInject()
+
     val scale = remember { Animatable(0f) }
 
     LaunchedEffect(key1 = true, block = {
         scale.animateTo(
             targetValue = 0.7f, animationSpec = tween(
-            durationMillis = 600, easing = {
-                OvershootInterpolator(7f)
-                    .getInterpolation(it)
-            }
-        ))
+                durationMillis = 600, easing = {
+                    OvershootInterpolator(7f)
+                        .getInterpolation(it)
+                }
+            ))
     })
     Column(
-        modifier = Modifier.fillMaxSize().padding(1.dp).background(BrandYellow),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(1.dp)
+            .background(BrandYellow),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -90,17 +99,23 @@ fun SplashScreen(
         Spacer(modifier = Modifier.height(100.dp))
         SplashButton(
             onClick = {
-                navigaToAuth()
+                val user = googleAuthUiClient.currentUser
+                if (user != null) {
+                    navigaToHome()
+                } else {
+                    navigaToAuth()
+                }
             },
         )
     }
 }
+
 @Composable
 fun SplashButton(
     modifier: Modifier = Modifier,
     backgroundColor: Color = BrandBrown,
     onClick: () -> Unit
-){
+) {
     Surface(
         modifier = modifier
             .fillMaxWidth()

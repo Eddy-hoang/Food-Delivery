@@ -1,6 +1,6 @@
 package com.example.fooddeliveryapp.ui.theme
 
-import com.stephennnamani.burgerrestaurantapp.R
+import com.example.fooddeliveryapp.R
 
 object Resources {
     object Icon {

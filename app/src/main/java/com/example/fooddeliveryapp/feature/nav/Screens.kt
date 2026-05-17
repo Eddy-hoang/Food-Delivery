@@ -11,5 +11,5 @@ sealed class Screens {
     data object AuthScreen : Screens()
 
     @Serializable
-    data object HomeScreen : Screens()
+    data object HomeGraph : Screens()
 }
