@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -23,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fooddeliveryapp.R
 import com.example.fooddeliveryapp.core.data.auth.GoogleUiClient
 import com.example.fooddeliveryapp.feature.component.GoogleButton
@@ -31,6 +32,8 @@ import com.example.fooddeliveryapp.ui.theme.FontSize
 import com.example.fooddeliveryapp.ui.theme.Resources
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
 import com.example.fooddeliveryapp.feature.component.PrimaryButton
+import com.example.fooddeliveryapp.feature.util.RequestState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -43,27 +46,10 @@ fun AuthScreen(
     val activity = context as Activity
     val scope = rememberCoroutineScope ()
 
-    // Use koinViewModel for ViewModels and koinInject for regular components
+   // Use koinViewModel for ViewModels a   nd koinInject for regular components
     val authViewModel: AuthViewModel = koinViewModel()
     val googleAuthUiClient: GoogleUiClient = koinInject()
-
-    val uiEvent by authViewModel.uiEvent.collectAsStateWithLifecycle()
-
-    val loading = uiEvent is AuthUiEvent.Loading
-
-    LaunchedEffect(uiEvent) {
-        when(uiEvent) {
-            is AuthUiEvent.Success -> {
-                navigateToHome()
-                authViewModel.consumeEvent()
-            }
-            is AuthUiEvent.Error -> {
-                authViewModel.consumeEvent()
-            }
-            else -> Unit
-        }
-    }
-
+    var  loaddingState by remember { mutableStateOf(false)  }
 
     Scaffold { paddingValues ->
         Column(
@@ -97,20 +83,30 @@ fun AuthScreen(
 
             }
             GoogleButton(
-                loading = loading,
+                loading = loaddingState,
                 onClick = {
                     scope.launch {
-                        authViewModel.startLoading()
+                        loaddingState = true
                         try{
                             val authResult = googleAuthUiClient.signInWithGoogle(activity)
                             val user = authResult.user
                             if(user != null){
-                                authViewModel.onFirebaseUserSignIn(user)
+                                authViewModel.createCustomer(
+                                    user = user,
+                                    onSucess = {
+                                        RequestState.Success(user)
+                                    },
+                                    onError = {
+                                        RequestState.Error("Unable to create new user")
+                                    }
+                                )
+                                delay(200)
+                                navigateToHome()
                             }else{
-                                authViewModel.emitError("User is null")
+                                RequestState.Error("User is null")
                             }
                         }catch (e: Exception){
-                            authViewModel.emitError(e.message?:"Sign-in error.")
+                            RequestState.Error(e.message?:"Sign-in error.")
                         }
                     }
                 },
@@ -125,16 +121,25 @@ fun AuthScreen(
                 onClick = {
                     scope.launch {
                         try {
-                            authViewModel.startLoading()
                             val guestResult = googleAuthUiClient.guestSign()
                             val user = guestResult.user
                             if(user != null){
-                                authViewModel.onFirebaseUserSignIn(user)
+                                authViewModel.createCustomer(
+                                    user = user,
+                                    onSucess = {
+                                        RequestState.Success(user)
+                                    },
+                                    onError = {
+                                        RequestState.Error("Unable to create new user")
+                                    }
+                                )
+                                delay(200)
+                                navigateToHome()
                             }else{
-                                authViewModel.emitError("Guest sign-in failed.")
+                                RequestState.Error("Guest sign-in failed.")
                             }
                         }catch (e: Exception){
-                            authViewModel.emitError(e.message?:"Guest sign-in error.")
+                            RequestState.Error(e.message?:"Guest sign-in error.")
                         }
                     }
                 }

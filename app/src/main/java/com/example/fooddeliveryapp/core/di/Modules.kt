@@ -17,16 +17,13 @@ val appModule = module {
     single<CustomerRepository> { CustomerRepoImpl() }
 
     viewModel {
-        AuthViewModel(
-            customerRepository = get<CustomerRepository>(),
-            auth = get<FirebaseAuth>()
-        )
+        AuthViewModel(get())
     }
 
     single {
         GoogleUiClient(
             context = androidContext(),
-            auth = get<FirebaseAuth>(),
+            auth = get(),
             serverClient = androidContext().getString(R.string.default_web_client_id)
         )
     }

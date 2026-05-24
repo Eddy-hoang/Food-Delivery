@@ -31,11 +31,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        // Tối ưu: Đổi từ VERSION_11 lên VERSION_17 để tương thích SDK 35
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        // Tối ưu: Đổi từ "11" lên "17"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -43,7 +45,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -58,6 +59,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.firebase.firestore)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -65,7 +67,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
 
     // Koin
     implementation(libs.koin.android)
@@ -79,12 +80,15 @@ dependencies {
     // Kotlinx serialization
     implementation(libs.kotlinx.serialization)
 
-    // Coil
+    // Coil 3
     implementation(libs.coil3)
     implementation(libs.coil3.compose)
     implementation(libs.coil3.compose.core)
     implementation(libs.coil3.network.ktor)
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    // Bổ sung thư viện này để không bị lỗi đỏ ở các hàm Firebase `.await()`
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
 }
