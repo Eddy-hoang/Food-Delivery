@@ -158,11 +158,24 @@ fun HomeScreen(
                             IconButton(
                                 onClick = { drawerState = drawerState.reverse()}
                             ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.menu),
-                                    contentDescription = "Menu icon",
-                                    tint = IconPrimary
-                                )
+                                AnimatedContent(
+                                    targetState = drawerState
+                                ) { drawer ->
+                                    if(!drawer.isOpened()){
+                                        Icon(
+                                            painter = painterResource(R.drawable.menu),
+                                            contentDescription = "Menu icon",
+                                            tint = IconPrimary
+                                        )
+                                    }else{
+                                        Icon(
+                                            painter = painterResource(R.drawable.close),
+                                            contentDescription = "Menu icon",
+                                            tint = IconPrimary
+                                        )
+                                    }
+                                }
+
                             }
                         },
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
