@@ -24,6 +24,7 @@ class GoogleUiClient(
         val googleIdOption = GetGoogleIdOption.Builder()
             .setServerClientId(serverClient)
             .setFilterByAuthorizedAccounts(false)
+            .setAutoSelectEnabled(false)
             .build()
 
         val request = GetCredentialRequest.Builder()

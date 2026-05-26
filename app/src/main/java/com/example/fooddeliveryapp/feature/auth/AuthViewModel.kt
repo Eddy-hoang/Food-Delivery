@@ -4,24 +4,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
 import com.google.firebase.auth.FirebaseUser
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
     private val customerRepository: CustomerRepository,
 ) : ViewModel() {
+
+    private val _uiEvent = MutableStateFlow<AuthUiEvent>(AuthUiEvent.Idle)
+
     fun createCustomer(
         user: FirebaseUser,
-        onSucess: () -> Unit,
+        onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             customerRepository.createCustomer(
                 user = user,
-                onSucess = onSucess,
+                onSuccess = onSuccess,
                 onError = onError
             )
         }
     }
 }
-

@@ -1,6 +1,7 @@
 package com.example.fooddeliveryapp.feature.auth
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,11 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.example.fooddeliveryapp.R
 import com.example.fooddeliveryapp.core.data.auth.GoogleUiClient
 import com.example.fooddeliveryapp.feature.component.GoogleButton
+import com.example.fooddeliveryapp.feature.component.PrimaryButton
 import com.example.fooddeliveryapp.ui.theme.FontSize
 import com.example.fooddeliveryapp.ui.theme.Resources
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
-import com.example.fooddeliveryapp.feature.component.PrimaryButton
-import com.example.fooddeliveryapp.feature.util.RequestState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -44,12 +44,13 @@ fun AuthScreen(
 ) {
     val context = LocalContext.current
     val activity = context as Activity
-    val scope = rememberCoroutineScope ()
+    val scope = rememberCoroutineScope()
 
-   // Use koinViewModel for ViewModels a   nd koinInject for regular components
     val authViewModel: AuthViewModel = koinViewModel()
     val googleAuthUiClient: GoogleUiClient = koinInject()
-    var  loaddingState by remember { mutableStateOf(false)  }
+
+    // Tên biến được sửa đúng chính tả tiếng Anh: loadingState
+    var loadingState by remember { mutableStateOf(false) }
 
     Scaffold { paddingValues ->
         Column(
@@ -67,46 +68,49 @@ fun AuthScreen(
             ) {
                 Image(
                     painter = painterResource(R.drawable.burgers),
-                    contentDescription = " Burgers logo",
+                    contentDescription = "Burgers logo",
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .size(
-                            width = 220.dp,
-                            height = 130.dp
-                        )
+                    modifier = Modifier.size(width = 220.dp, height = 130.dp)
                 )
                 Text(
                     text = stringResource(R.string.sign_in_text),
                     fontFamily = oswaldVariableFont(),
                     fontSize = FontSize.MEDIUM
                 )
-
             }
+
+            // 1. NÚT ĐĂNG NHẬP GOOGLE
             GoogleButton(
-                loading = loaddingState,
+                loading = loadingState,
                 onClick = {
                     scope.launch {
-                        loaddingState = true
-                        try{
+                        loadingState = true // Bật hiệu ứng xoay loading
+                        try {
                             val authResult = googleAuthUiClient.signInWithGoogle(activity)
                             val user = authResult.user
-                            if(user != null){
+                            if (user != null) {
+                                // Gọi hàm tạo customer và truyền logic điều hướng khi thành công/thất bại
                                 authViewModel.createCustomer(
                                     user = user,
-                                    onSucess = {
-                                        RequestState.Success(user)
+                                    onSuccess = {
+                                        scope.launch {
+                                            delay(200)
+                                            loadingState = false
+                                            navigateToHome()
+                                        }
                                     },
-                                    onError = {
-                                        RequestState.Error("Unable to create new user")
+                                    onError = { errorMessage ->
+                                        loadingState = false
+                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                                     }
                                 )
-                                delay(200)
-                                navigateToHome()
-                            }else{
-                                RequestState.Error("User is null")
+                            } else {
+                                loadingState = false
+                                Toast.makeText(context, "User is null", Toast.LENGTH_LONG).show()
                             }
-                        }catch (e: Exception){
-                            RequestState.Error(e.message?:"Sign-in error.")
+                        } catch (e: Exception) {
+                            loadingState = false
+                            Toast.makeText(context, e.message ?: "Sign-in error.", Toast.LENGTH_LONG).show()
                         }
                     }
                 },
@@ -115,31 +119,33 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // 2. NÚT ĐĂNG NHẬP VỚI TƯ CÁCH KHÁCH (GUEST)
             PrimaryButton(
-                text= stringResource(R.string.guest_text),
+                text = stringResource(R.string.guest_text),
                 icon = painterResource(R.drawable.log_in),
                 onClick = {
                     scope.launch {
                         try {
                             val guestResult = googleAuthUiClient.guestSign()
                             val user = guestResult.user
-                            if(user != null){
+                            if (user != null) {
                                 authViewModel.createCustomer(
                                     user = user,
-                                    onSucess = {
-                                        RequestState.Success(user)
+                                    onSuccess = {
+                                        scope.launch {
+                                            delay(200)
+                                            navigateToHome()
+                                        }
                                     },
-                                    onError = {
-                                        RequestState.Error("Unable to create new user")
+                                    onError = { errorMessage ->
+                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                                     }
                                 )
-                                delay(200)
-                                navigateToHome()
-                            }else{
-                                RequestState.Error("Guest sign-in failed.")
+                            } else {
+                                Toast.makeText(context, "Guest sign-in failed.", Toast.LENGTH_LONG).show()
                             }
-                        }catch (e: Exception){
-                            RequestState.Error(e.message?:"Guest sign-in error.")
+                        } catch (e: Exception) {
+                            Toast.makeText(context, e.message ?: "Guest sign-in error.", Toast.LENGTH_LONG).show()
                         }
                     }
                 }

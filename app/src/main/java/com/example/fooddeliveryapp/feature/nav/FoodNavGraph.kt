@@ -41,7 +41,13 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen){
         }
 
         composable<Screens.HomeGraph> {
-            HomeScreen()
+            HomeScreen(
+                navigateToAuth = {
+                    navController.navigate(Screens.AuthScreen){
+                        popUpTo<Screens.HomeGraph> {   inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

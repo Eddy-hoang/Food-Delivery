@@ -2,9 +2,11 @@ package com.example.fooddeliveryapp.core.data.repoImpl
 
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
 import com.example.fooddeliveryapp.core.data.models.Customer
+import com.example.fooddeliveryapp.feature.util.RequestState
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
 
@@ -15,7 +17,7 @@ class CustomerRepoImpl : CustomerRepository {
 
     override suspend fun createCustomer(
         user: FirebaseUser,
-        onSucess: () -> Unit,
+        onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         val customerCollection = Firebase.firestore.collection("customer")
@@ -31,6 +33,15 @@ class CustomerRepoImpl : CustomerRepository {
             docRef.set(customer).await()
         }
         Unit
+    }
+
+    override suspend fun signOut(): RequestState<Unit> {
+        return try {
+            Firebase.auth.signOut()
+            RequestState.Success(Unit)
+        }catch (e: Exception){
+            RequestState.Error("Error while signing out ${e.message}")
+        }
     }
 
 }

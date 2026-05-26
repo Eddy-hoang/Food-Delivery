@@ -1,4 +1,4 @@
-package com.example.fooddeliveryapp.feature.component
+package com.example.fooddeliveryapp.feature.home.component
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -20,7 +20,6 @@ import com.example.fooddeliveryapp.feature.home.domain.BottomBarDestinations
 import com.example.fooddeliveryapp.ui.theme.IconPrimary
 import com.example.fooddeliveryapp.ui.theme.IconSecondary
 import com.example.fooddeliveryapp.ui.theme.SurfaceDarker
-import com.example.fooddeliveryapp.ui.theme.SurfaceLighter
 
 @Composable
 fun BurgersBottomBar(
