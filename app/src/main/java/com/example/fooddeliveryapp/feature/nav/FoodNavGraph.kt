@@ -7,34 +7,35 @@ import androidx.navigation.compose.rememberNavController
 import com.example.fooddeliveryapp.feature.splash.SplashScreen
 import com.example.fooddeliveryapp.feature.auth.AuthScreen
 import com.example.fooddeliveryapp.feature.home.HomeScreen
+import com.example.fooddeliveryapp.feature.profile.componemt.ProfileSreen
 
 @Composable
-fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen){
+fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
         startDestination = startDeprecated
-    ){
-        composable<Screens.SplashScreen>{
+    ) {
+        composable<Screens.SplashScreen> {
             SplashScreen(
                 navigaToAuth = {
-                    navController.navigate(Screens.AuthScreen){
-                        popUpTo<Screens.SplashScreen>{inclusive = true}
+                    navController.navigate(Screens.AuthScreen) {
+                        popUpTo<Screens.SplashScreen> { inclusive = true }
                     }
                 },
                 navigaToHome = {
-                    navController.navigate(Screens.HomeGraph){
+                    navController.navigate(Screens.HomeGraph) {
                         popUpTo<Screens.SplashScreen> { inclusive = true }
                     }
                 }
             )
         }
-        composable<Screens.AuthScreen>{
+        composable<Screens.AuthScreen> {
             AuthScreen(
                 navigateToHome = {
-                    navController.navigate(Screens.HomeGraph){
-                        popUpTo<Screens.AuthScreen> {   inclusive = true }
+                    navController.navigate(Screens.HomeGraph) {
+                        popUpTo<Screens.AuthScreen> { inclusive = true }
                     }
                 }
             )
@@ -43,9 +44,20 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen){
         composable<Screens.HomeGraph> {
             HomeScreen(
                 navigateToAuth = {
-                    navController.navigate(Screens.AuthScreen){
-                        popUpTo<Screens.HomeGraph> {   inclusive = true }
+                    navController.navigate(Screens.AuthScreen) {
+                        popUpTo<Screens.HomeGraph> { inclusive = true }
                     }
+                },
+                navigateToProfile = {
+                    navController.navigate(Screens.Profile)
+                }
+            )
+        }
+
+        composable<Screens.Profile> {
+            ProfileSreen(
+                navigateBack = {
+                    navController.navigateUp()
                 }
             )
         }

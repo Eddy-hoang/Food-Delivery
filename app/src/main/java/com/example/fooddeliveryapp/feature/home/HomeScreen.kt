@@ -59,7 +59,8 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    navigateToAuth: () -> Unit
+    navigateToAuth: () -> Unit,
+    navigateToProfile: () -> Unit
 ) {
     val navController = rememberNavController()
     val currentRouter = navController.currentBackStackEntryAsState()
@@ -108,7 +109,7 @@ fun HomeScreen(
             .systemBarsPadding()
     ){
         CustomDrawer(
-            onProfileClick = {},
+            onProfileClick = navigateToProfile,
             onContactUsClick = {},
             onSignOutClick = {
                 viewModel.signOut(
