@@ -94,7 +94,7 @@ class CustomerRepoImpl : CustomerRepository {
         }
     }
 
-    override suspend fun readCustomer(
+    override suspend fun updateCustomer(
         customer: Customer,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -111,10 +111,27 @@ class CustomerRepoImpl : CustomerRepository {
                     val phoneNumberMap = customer.phoneNumber?.let {
                         mapOf(
                             "CountryCode" to it.dialCode,
-                            "number" to it.number
+                            "number" to it.number,
                         )
                     }
+                    customerCollection
+                        .document(customer.id)
+                        .update(
+                            mapOf(
+                                "firstName" to customer.firstName,
+                                "lastName" to customer.lastName,
+                                "city" to customer.city,
+                                "postalCode" to customer.postalCode,
+                                "address" to customer.address,
+                                "phoneNumber" to phoneNumberMap,
+                            )
+                        ).await()
+                    onSuccess()
+                }else{
+                    RequestState.Error("Customer document not found.")
                 }
+            }else{
+                RequestState.Error("User is not available.")
             }
         }catch (e: Exception){
             onError("Error while updating custommer information: ${e.message}")

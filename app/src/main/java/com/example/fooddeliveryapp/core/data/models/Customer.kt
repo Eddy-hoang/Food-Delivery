@@ -18,6 +18,6 @@ data class Customer(
 
 @Serializable
 data class PhoneNumber(
-    val dialCode: String,
+    val dialCode: Int,
     val number: String
 )
