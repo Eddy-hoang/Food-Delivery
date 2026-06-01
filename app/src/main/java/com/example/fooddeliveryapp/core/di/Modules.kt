@@ -6,6 +6,7 @@ import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
 import com.example.fooddeliveryapp.core.data.repoImpl.CustomerRepoImpl
 import com.example.fooddeliveryapp.feature.auth.AuthViewModel
 import com.example.fooddeliveryapp.feature.home.HomeViewModel
+import com.example.fooddeliveryapp.feature.profile.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -19,6 +20,8 @@ val appModule = module {
 
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
+    viewModel { ProfileViewModel(get()) }
+
 
     single {
         GoogleUiClient(

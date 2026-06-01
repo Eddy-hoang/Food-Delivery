@@ -58,7 +58,7 @@ class CustomerRepoImpl : CustomerRepository {
                         if (documentSnapshot.exists()) {
                             val postalCode = (documentSnapshot.get("postalCode") as? Long)?.toInt()
                             val phoneNumberMap = documentSnapshot.get("phoneNumber") as? Map<*, *>
-                            val phoneNumber = phoneNumberMap?.let{
+                            val phoneNumber = phoneNumberMap?.let {
                                 val dialCode = (it["CountryCode"] as? Long)?.toInt()
                                 val number = it["number"] as? String
                                 if (dialCode != null && number != null) {
@@ -66,31 +66,34 @@ class CustomerRepoImpl : CustomerRepository {
                                         dialCode = dialCode,
                                         number = number
                                     )
-                                }else{
+                                } else {
                                     null
                                 }
                             }
+                            
                             val customer = Customer(
                                 id = documentSnapshot.id,
-                                firstName = documentSnapshot.get("firstName") as String,
-                                lastName = documentSnapshot.get("lastName") as String,
-                                email = documentSnapshot.get("email") as String,
-                                city = documentSnapshot.get("city") as String,
+                                firstName = documentSnapshot.getString("firstName") ?: "",
+                                lastName = documentSnapshot.getString("lastName") ?: "",
+                                email = documentSnapshot.getString("email") ?: "",
+                                city = documentSnapshot.getString("city"),
                                 postalCode = postalCode,
                                 phoneNumber = phoneNumber,
-                                address = documentSnapshot.get("address") as String?,
-                                profilePictureUrl = documentSnapshot.get("photoUrl") as String?,
+                                address = documentSnapshot.getString("address"),
+                                isAdmin = documentSnapshot.getBoolean("admin") ?: false,
+                                profilePictureUrl = documentSnapshot.getString("profilePictureUrl") 
+                                    ?: documentSnapshot.getString("photoUrl"),
                             )
                             send(RequestState.Success(data = customer))
-                        }else{
+                        } else {
                             send(RequestState.Error("Queried customer document does not exist."))
                         }
                     }
-            }else{
+            } else {
                 send(RequestState.Error("User is not available."))
             }
         } catch (e: Exception) {
-            send(RequestState.Error("Error while reading customer imformation: ${e.message}"))
+            send(RequestState.Error("Error while reading customer information: ${e.message}"))
         }
     }
 
@@ -101,13 +104,13 @@ class CustomerRepoImpl : CustomerRepository {
     ) {
         try {
             val userId = getCurrentUserId()
-            if(userId != null){
+            if (userId != null) {
                 val firestore = Firebase.firestore
                 val customerCollection = firestore.collection("customer")
                 val existingCustomer = customerCollection
-                    .document(customer.id)
+                    .document(userId)
                     .get().await()
-                if (existingCustomer.exists()){
+                if (existingCustomer.exists()) {
                     val phoneNumberMap = customer.phoneNumber?.let {
                         mapOf(
                             "CountryCode" to it.dialCode,
@@ -115,7 +118,7 @@ class CustomerRepoImpl : CustomerRepository {
                         )
                     }
                     customerCollection
-                        .document(customer.id)
+                        .document(userId)
                         .update(
                             mapOf(
                                 "firstName" to customer.firstName,
@@ -127,14 +130,14 @@ class CustomerRepoImpl : CustomerRepository {
                             )
                         ).await()
                     onSuccess()
-                }else{
-                    RequestState.Error("Customer document not found.")
+                } else {
+                    onError("Customer document not found.")
                 }
-            }else{
-                RequestState.Error("User is not available.")
+            } else {
+                onError("User is not available.")
             }
-        }catch (e: Exception){
-            onError("Error while updating custommer information: ${e.message}")
+        } catch (e: Exception) {
+            onError("Error while updating customer information: ${e.message}")
         }
     }
 

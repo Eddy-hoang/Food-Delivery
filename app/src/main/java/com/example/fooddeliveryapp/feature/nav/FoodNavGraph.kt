@@ -7,7 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.fooddeliveryapp.feature.splash.SplashScreen
 import com.example.fooddeliveryapp.feature.auth.AuthScreen
 import com.example.fooddeliveryapp.feature.home.HomeScreen
-import com.example.fooddeliveryapp.feature.profile.componemt.ProfileSreen
+import com.example.fooddeliveryapp.feature.profile.ProfileScreen
 
 @Composable
 fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
@@ -55,7 +55,7 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
         }
 
         composable<Screens.Profile> {
-            ProfileSreen(
+            ProfileScreen(
                 navigateBack = {
                     navController.navigateUp()
                 }

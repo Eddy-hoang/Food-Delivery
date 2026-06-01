@@ -1,4 +1,4 @@
-package com.example.fooddeliveryapp.feature.profile.componemt
+package com.example.fooddeliveryapp.feature.profile.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,18 +13,18 @@ import androidx.compose.ui.unit.dp
 import com.example.fooddeliveryapp.feature.home.component.BurgerTextField
 
 @Composable
-fun ProfileFrom(
+fun ProfileForm(
     modifier: Modifier = Modifier,
     firstName: String,
     onFirstNameChange: (String) -> Unit,
     lastName: String,
     onLastNameChange: (String) -> Unit,
     email: String,
-    city: String,
+    city: String?,
     onCityChange: (String) -> Unit,
     postalCode: Int?,
-    onpostalCodeChange: (String) -> Unit,
-    address: String,
+    onPostalCodeChange: (Int?) -> Unit,
+    address: String?,
     onAddressChange: (String) -> Unit,
     phoneNumber: String?,
     onPhoneNumberChange: (String) -> Unit,
@@ -34,7 +34,6 @@ fun ProfileFrom(
             .fillMaxSize()
             .verticalScroll(state = rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-
     ) {
         BurgerTextField(
             value = firstName,
@@ -42,50 +41,55 @@ fun ProfileFrom(
             placeholder = "First Name",
             error = firstName.length !in 3..10
         )
+
         BurgerTextField(
             value = lastName,
             onValueChange = onLastNameChange,
             placeholder = "Last Name",
-            error = lastName.length !in 3..10
+            error = lastName.length !in 3..50
         )
+
         BurgerTextField(
             value = email,
             onValueChange = {},
             placeholder = "Email",
             enabled = false
         )
+
         BurgerTextField(
             value = city ?: "",
             onValueChange = onCityChange,
             placeholder = "City",
-            error = city.length !in 3..10
+            error = city != null && city.length !in 3..50
         )
+
         BurgerTextField(
             value = "${postalCode ?: ""}",
-            onValueChange = onpostalCodeChange,
+            onValueChange = { onPostalCodeChange(it.toIntOrNull()) },
             placeholder = "Postal Code",
-            error = postalCode == null || firstName.length !in 3..10,
+            error = postalCode != null && postalCode.toString().length !in 3..8,
             keyBoardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text
+                keyboardType = KeyboardType.Number
             )
-
         )
+
         BurgerTextField(
-            value = address,
+            value = address ?: "",
             onValueChange = onAddressChange,
             placeholder = "Address",
-            error = address.length !in 3..10,
+            error = address != null && address.length !in 3..50,
             keyBoardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text
             )
         )
+
         BurgerTextField(
             value = phoneNumber ?: "",
             onValueChange = onPhoneNumberChange,
             placeholder = "Phone Number",
-            error = phoneNumber.toString().length !in 3..30,
+            error = phoneNumber != null && phoneNumber.length !in 5..30,
             keyBoardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Phone
             )
         )
     }
