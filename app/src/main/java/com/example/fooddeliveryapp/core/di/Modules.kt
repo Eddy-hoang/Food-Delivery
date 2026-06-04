@@ -8,11 +8,31 @@ import com.example.fooddeliveryapp.feature.auth.AuthViewModel
 import com.example.fooddeliveryapp.feature.home.HomeViewModel
 import com.example.fooddeliveryapp.feature.profile.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
+import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 val appModule = module {
+
+    single {
+        OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    single {
+        Retrofit.Builder()
+            .baseUrl("https://restcountries.com/")
+            .client(get())
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
 
     single<FirebaseAuth> { FirebaseAuth.getInstance() }
 

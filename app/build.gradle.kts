@@ -91,4 +91,12 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     // Bổ sung thư viện này để không bị lỗi đỏ ở các hàm Firebase `.await()`
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
+
+    //retrofit
+    // Use stable versions if you encounter issues
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Keep only the serialization converter
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 }

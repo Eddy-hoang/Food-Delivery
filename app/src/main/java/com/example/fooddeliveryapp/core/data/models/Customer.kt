@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Customer(
-    val id: String = "", // Đã thêm = ""
+    val id: String = "",
     val firstName: String = "",
     val lastName: String = "",
     val email: String = "",
@@ -12,12 +12,13 @@ data class Customer(
     val address: String? = null,
     val postalCode: Int? = null,
     val phoneNumber: PhoneNumber? = null,
+    val country: Country? = null,
     val isAdmin: Boolean = false,
     val profilePictureUrl: String? = null // Đã thêm = null
 )
 
 @Serializable
 data class PhoneNumber(
-    val dialCode: Int = 0, // Đã thêm = 0
-    val number: String = "" // Đã thêm = ""
+    val dialCode: Int = 0,
+    val number: String = ""
 )

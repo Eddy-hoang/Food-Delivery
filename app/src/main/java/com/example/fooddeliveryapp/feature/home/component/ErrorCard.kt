@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.TextUnit
 import com.example.fooddeliveryapp.ui.theme.FontSize
 
 @Composable
-fun Error(
+fun ErrorCard(
     modifier: Modifier = Modifier,
     message: String,
     fontSize: TextUnit = FontSize.SMALL,

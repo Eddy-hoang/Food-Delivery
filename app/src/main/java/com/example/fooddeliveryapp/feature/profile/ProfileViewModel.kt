@@ -5,10 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.fooddeliveryapp.core.data.domain.CountryRepository
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
+import com.example.fooddeliveryapp.core.data.models.Country
 import com.example.fooddeliveryapp.core.data.models.Customer
 import com.example.fooddeliveryapp.core.data.models.PhoneNumber
 import com.example.fooddeliveryapp.feature.util.RequestState
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 data class ProfileScreenState(
@@ -18,6 +21,7 @@ data class ProfileScreenState(
     val email: String = "",
     val city: String? = null,
     val address: String? = null,
+    val country: Country? = null,
     val postalCode: Int? = null,
     val phoneNumber: PhoneNumber? = null,
     val isAdmin: Boolean = false,
@@ -25,11 +29,17 @@ data class ProfileScreenState(
 )
 
 class ProfileViewModel(
-    private val customerRepository: CustomerRepository
+    private val customerRepository: CustomerRepository,
+    private val countryRepository: CountryRepository
 ) : ViewModel() {
     var screenReady: RequestState<Unit> by mutableStateOf(RequestState.Loading)
     var screenState: ProfileScreenState by mutableStateOf(ProfileScreenState())
         private set
+
+    private var countriesState by mutableStateOf<RequestState<List<Country>>>(RequestState.Loading)
+        private set
+
+    var countries: List<Country> = emptyList()
 
     val isFormValid: Boolean
         get() = with(screenState) {
@@ -39,6 +49,23 @@ class ProfileViewModel(
 
     init {
         viewModelScope.launch { observeCustomer() }
+        viewModelScope.launch { loadCountries() }
+    }
+
+    private suspend fun loadCountries() = viewModelScope.launch {
+        countryRepository.fetchCountries().onStart { countriesState = RequestState.Loading }
+            .collect { state ->
+                countriesState = state
+                if (state is RequestState.Success) {
+                    countries = state.data
+
+                    screenState.phoneNumber?.dialCode?.let { dial ->
+                        state.data.firstOrNull { it.diaCode == dial }?.let { match ->
+                            screenState = screenState.copy(country = match)
+                        }
+                    }
+                }
+            }
     }
 
     private suspend fun observeCustomer() {

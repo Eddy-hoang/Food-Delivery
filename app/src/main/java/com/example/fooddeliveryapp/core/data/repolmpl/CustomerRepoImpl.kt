@@ -1,6 +1,7 @@
 package com.example.fooddeliveryapp.core.data.repoImpl
 
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
+import com.example.fooddeliveryapp.core.data.models.Country
 import com.example.fooddeliveryapp.core.data.models.Customer
 import com.example.fooddeliveryapp.core.data.models.PhoneNumber
 import com.example.fooddeliveryapp.feature.util.RequestState
@@ -70,7 +71,23 @@ class CustomerRepoImpl : CustomerRepository {
                                     null
                                 }
                             }
-                            
+
+                            val countryMap = documentSnapshot.get("country") as? Map<*, *>
+                            val country = countryMap?.let { map ->
+                                val name = map["name"] as? String
+                                val code = map["code"] as? String
+                                val diaCode = (map["diaCode"] as? Long)?.toInt()
+                                val flagUrl = map["flagUrl"] as? String
+                                if (name != null && code != null && diaCode != null && flagUrl != null) {
+                                    Country(
+                                        name = name,
+                                        code = code,
+                                        diaCode = diaCode,
+                                        flagUrl = flagUrl
+                                    )
+                                } else null
+                            }
+
                             val customer = Customer(
                                 id = documentSnapshot.id,
                                 firstName = documentSnapshot.getString("firstName") ?: "",
@@ -80,8 +97,9 @@ class CustomerRepoImpl : CustomerRepository {
                                 postalCode = postalCode,
                                 phoneNumber = phoneNumber,
                                 address = documentSnapshot.getString("address"),
+                                country = country,
                                 isAdmin = documentSnapshot.getBoolean("admin") ?: false,
-                                profilePictureUrl = documentSnapshot.getString("profilePictureUrl") 
+                                profilePictureUrl = documentSnapshot.getString("profilePictureUrl")
                                     ?: documentSnapshot.getString("photoUrl"),
                             )
                             send(RequestState.Success(data = customer))
@@ -117,6 +135,16 @@ class CustomerRepoImpl : CustomerRepository {
                             "number" to it.number,
                         )
                     }
+
+                    val countryMap = customer.country?.let {
+                        mapOf(
+                            "name" to it.name,
+                            "code" to it.code,
+                            "diaCode" to it.diaCode,
+                            "flagUrl" to it.flagUrl,
+                        )
+                    }
+
                     customerCollection
                         .document(userId)
                         .update(
@@ -127,6 +155,7 @@ class CustomerRepoImpl : CustomerRepository {
                                 "postalCode" to customer.postalCode,
                                 "address" to customer.address,
                                 "phoneNumber" to phoneNumberMap,
+                                "country" to countryMap,
                             )
                         ).await()
                     onSuccess()
