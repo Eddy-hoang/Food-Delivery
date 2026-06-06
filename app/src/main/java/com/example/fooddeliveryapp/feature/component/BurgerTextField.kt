@@ -1,4 +1,4 @@
-package com.example.fooddeliveryapp.feature.home.component
+package com.example.fooddeliveryapp.feature.component
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.border

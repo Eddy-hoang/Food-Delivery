@@ -1,4 +1,4 @@
-package com.example.fooddeliveryapp.feature.home.component
+package com.example.fooddeliveryapp.feature.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.fooddeliveryapp.ui.theme.IconPrimary
 import com.example.fooddeliveryapp.ui.theme.IconSecondary
 
 @Composable

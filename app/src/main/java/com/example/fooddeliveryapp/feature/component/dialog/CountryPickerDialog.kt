@@ -40,8 +40,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.fooddeliveryapp.core.data.models.Country
-import com.example.fooddeliveryapp.feature.home.component.BurgerTextField
-import com.example.fooddeliveryapp.feature.home.component.ErrorCard
+import com.example.fooddeliveryapp.feature.component.BurgerTextField
+import com.example.fooddeliveryapp.feature.component.ErrorCard
 import com.example.fooddeliveryapp.feature.util.Alpha
 import com.example.fooddeliveryapp.ui.theme.FontSize
 import com.example.fooddeliveryapp.ui.theme.IconWhite

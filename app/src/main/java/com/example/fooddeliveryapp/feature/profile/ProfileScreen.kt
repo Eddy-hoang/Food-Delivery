@@ -20,8 +20,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.fooddeliveryapp.feature.component.PrimaryButton
-import com.example.fooddeliveryapp.feature.home.component.InfoCard
-import com.example.fooddeliveryapp.feature.home.component.LoadingCard
+import com.example.fooddeliveryapp.feature.component.InfoCard
+import com.example.fooddeliveryapp.feature.component.LoadingCard
 import com.example.fooddeliveryapp.feature.profile.component.ProfileForm
 import com.example.fooddeliveryapp.feature.util.DisplayResult
 import com.example.fooddeliveryapp.ui.theme.FontSize

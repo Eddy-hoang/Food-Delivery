@@ -40,7 +40,7 @@ val appModule = module {
 
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
-    viewModel { ProfileViewModel(get()) }
+    viewModel { ProfileViewModel(get(),get()) }
 
 
     single {

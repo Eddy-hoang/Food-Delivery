@@ -1,7 +1,5 @@
-package com.example.fooddeliveryapp.feature.home.component
+package com.example.fooddeliveryapp.feature.component
 
-import android.widget.Space
-import androidx.appcompat.widget.DialogTitle
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
