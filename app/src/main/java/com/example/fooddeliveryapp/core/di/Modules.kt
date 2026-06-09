@@ -2,7 +2,10 @@ package com.example.fooddeliveryapp.core.di
 
 import com.example.fooddeliveryapp.R
 import com.example.fooddeliveryapp.core.data.auth.GoogleUiClient
+import com.example.fooddeliveryapp.core.data.domain.CountryRepository
+import com.example.fooddeliveryapp.core.data.domain.CountryRepositoryImpl
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
+import com.example.fooddeliveryapp.core.data.remote.RestCountriesApi
 import com.example.fooddeliveryapp.core.data.repoImpl.CustomerRepoImpl
 import com.example.fooddeliveryapp.feature.auth.AuthViewModel
 import com.example.fooddeliveryapp.feature.home.HomeViewModel
@@ -10,7 +13,7 @@ import com.example.fooddeliveryapp.feature.profile.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.viewModel
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -33,6 +36,8 @@ val appModule = module {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
+    single <RestCountriesApi>{ get<Retrofit>().create(RestCountriesApi::class.java)  }
+    single<CountryRepository> { CountryRepositoryImpl(get()) }
 
     single<FirebaseAuth> { FirebaseAuth.getInstance() }
 

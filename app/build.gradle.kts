@@ -59,6 +59,8 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.firebase.firestore)
+    implementation(libs.play.services.cast.tv)
+    implementation(libs.androidx.room.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -85,11 +87,10 @@ dependencies {
     implementation(libs.coil3.compose)
     implementation(libs.coil3.compose.core)
     implementation(libs.coil3.network.ktor)
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
+    implementation("io.ktor:ktor-client-okhttp:3.0.0")
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
-    // Bổ sung thư viện này để không bị lỗi đỏ ở các hàm Firebase `.await()`
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
 
     //retrofit
@@ -99,4 +100,8 @@ dependencies {
     // Keep only the serialization converter
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    //Cloudinary
+    implementation(libs.cloudinary.android)
+
 }

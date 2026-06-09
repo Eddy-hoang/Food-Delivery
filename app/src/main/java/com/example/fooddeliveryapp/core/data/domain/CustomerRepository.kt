@@ -1,5 +1,6 @@
 package com.example.fooddeliveryapp.core.data.domain
 
+import android.net.Uri
 import com.example.fooddeliveryapp.core.data.models.Customer
 import com.example.fooddeliveryapp.feature.util.RequestState
 import com.google.firebase.auth.FirebaseUser
@@ -21,6 +22,9 @@ interface CustomerRepository {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     )
+
+    suspend fun updateProfilePictureUrl(url: String): RequestState<Unit>
+    suspend fun updateProfilePhoto(localUrl: Uri, onProcess:(Float)-> Unit): RequestState<String>
 
     suspend fun signOut(): RequestState<Unit>
 }

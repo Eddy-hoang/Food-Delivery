@@ -56,8 +56,8 @@ import com.example.fooddeliveryapp.ui.theme.TextPrimary
 fun CountryPickerDialog(
     countries: List<Country>,
     selectedCountry: Country?,
-    onConfirmClick: (Country) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onConfirmClick: (Country) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var localSelection by remember(selectedCountry) { mutableStateOf(selectedCountry) }
@@ -67,7 +67,7 @@ fun CountryPickerDialog(
         if (query.isEmpty()) countries
         else countries.filter { country ->
             country.name.lowercase().contains(query) ||
-                    "${country.diaCode}".contains(query) ||
+                    "${country.dialCode}".contains(query) ||
                     country.code.lowercase().contains(query)
 
         }
@@ -190,7 +190,7 @@ fun CountryPicker(
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = "+${country.diaCode} (${country.name})",
+            text = "+${country.dialCode} (${country.name})",
             fontSize = FontSize.REGULAR,
             color = TextPrimary,
             maxLines = 1,

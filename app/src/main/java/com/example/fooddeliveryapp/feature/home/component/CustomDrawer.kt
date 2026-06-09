@@ -31,13 +31,21 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun CustomDrawer(
+    profilePictureUrl: String?,
     onProfileClick: () -> Unit,
     onContactUsClick: () -> Unit,
     onSignOutClick: () -> Unit,
     onAdminPanelClick: () -> Unit,
 ) {
+
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
+
+    val resolvedPhotoUrl = if (!profilePictureUrl.isNullOrBlank() && profilePictureUrl != "null") {
+        profilePictureUrl
+    } else {
+        currentUser?.photoUrl?.toString()
+    }
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -47,12 +55,14 @@ fun CustomDrawer(
 
         Spacer(modifier = Modifier.height(50.dp))
         AsyncImage(
-            model = currentUser?.photoUrl ?: "Unknow",
+            model = resolvedPhotoUrl,
             contentDescription = "Profile picture",
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape),
             contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.user),
+            error = painterResource(R.drawable.user),
             fallback = painterResource(R.drawable.user)
         )
         Spacer(modifier = Modifier.height(8.dp))

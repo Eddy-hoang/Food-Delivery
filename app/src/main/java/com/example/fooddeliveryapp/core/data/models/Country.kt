@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class Country(
     val code: String,
     val name: String,
-    val diaCode: Int,
+    val dialCode: Int,
     val flagUrl: String?
 )
 
@@ -50,7 +50,7 @@ fun RestCounttriesDto.toCountryOrNull(): Country? {
 
     return Country(
         name = displayName,
-        diaCode = diaInt,
+        dialCode = diaInt,
         code = code2,
         flagUrl = (flags?.png ?: flags?.svg)
     )

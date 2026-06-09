@@ -1,5 +1,6 @@
 package com.example.fooddeliveryapp.feature.home
 
+import android.content.res.Resources
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -68,6 +69,9 @@ fun HomeScreen(
     val viewModel = koinViewModel<HomeViewModel>()
     val context = LocalContext.current
 
+    // Lấy thông tin khách hàng real-time từ HomeViewModel
+    val customer = viewModel.customerState
+
     val selectedDestinaion by remember {
         derivedStateOf {
             val route = currentRouter.value?.destination?.route.toString()
@@ -91,14 +95,15 @@ fun HomeScreen(
     )
 
     val animatedScale by animateFloatAsState(
-        targetValue = if( drawerState.isOpened()) 0.9f else 1f
+        targetValue = if (drawerState.isOpened()) 0.9f else 1f
     )
 
     val animatedBackground by animateColorAsState(
         targetValue = if (drawerState.isOpened()) BrandBrown else Surface
     )
 
-    val animatedRaldius by animateDpAsState(
+    // Sửa lỗi chính tả animatedRaldius -> animatedRadius
+    val animatedRadius by animateDpAsState(
         targetValue = if (drawerState.isOpened()) 20.dp else 0.dp
     )
 
@@ -109,6 +114,7 @@ fun HomeScreen(
             .systemBarsPadding()
     ){
         CustomDrawer(
+            profilePictureUrl = customer?.profilePictureUrl,
             onProfileClick = navigateToProfile,
             onContactUsClick = {},
             onSignOutClick = {
@@ -130,10 +136,10 @@ fun HomeScreen(
                 .fillMaxSize()
                 .offset(animatedOffset)
                 .scale(animatedScale)
-                .clip(RoundedCornerShape(animatedRaldius))
+                .clip(RoundedCornerShape(animatedRadius))
                 .shadow(
                     elevation = 20.dp,
-                    shape = RoundedCornerShape(animatedRaldius),
+                    shape = RoundedCornerShape(animatedRadius),
                     ambientColor = Color.Black.copy(0.6f),
                     spotColor = Color.Black.copy(0.6f)
                 )
@@ -226,11 +232,9 @@ fun HomeScreen(
             }
         }
     }
-
-
 }
 
 fun getScreenWidth(): Float{
-    return android.content.res.Resources.getSystem().displayMetrics.widthPixels /
-            android.content.res.Resources.getSystem().displayMetrics.density
+    return Resources.getSystem().displayMetrics.widthPixels /
+            Resources.getSystem().displayMetrics.density
 }

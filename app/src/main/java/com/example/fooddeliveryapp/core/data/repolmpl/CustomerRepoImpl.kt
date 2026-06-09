@@ -1,5 +1,10 @@
 package com.example.fooddeliveryapp.core.data.repoImpl
 
+import android.net.Uri
+import androidx.core.net.toUri
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
 import com.example.fooddeliveryapp.core.data.models.Country
 import com.example.fooddeliveryapp.core.data.models.Customer
@@ -9,12 +14,15 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
+import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.snapshots
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.resume
 
 class CustomerRepoImpl : CustomerRepository {
     override fun getCurrentUserId(): String? =
@@ -76,17 +84,22 @@ class CustomerRepoImpl : CustomerRepository {
                             val country = countryMap?.let { map ->
                                 val name = map["name"] as? String
                                 val code = map["code"] as? String
-                                val diaCode = (map["diaCode"] as? Long)?.toInt()
+                                val dialCode = (map["diaCode"] as? Long)?.toInt()
                                 val flagUrl = map["flagUrl"] as? String
-                                if (name != null && code != null && diaCode != null && flagUrl != null) {
+                                if (name != null && code != null && dialCode != null && flagUrl != null) {
                                     Country(
                                         name = name,
                                         code = code,
-                                        diaCode = diaCode,
+                                        dialCode = dialCode,
                                         flagUrl = flagUrl
                                     )
                                 } else null
                             }
+
+                            // Clean URL: Xử lý trường hợp Firestore lưu chuỗi "null" hoặc để trống
+                            val rawUrl = documentSnapshot.getString("profilePictureUrl")
+                                ?: documentSnapshot.getString("photoUrl")
+                            val cleanUrl = if (rawUrl == "null" || rawUrl.isNullOrBlank()) null else rawUrl
 
                             val customer = Customer(
                                 id = documentSnapshot.id,
@@ -99,8 +112,7 @@ class CustomerRepoImpl : CustomerRepository {
                                 address = documentSnapshot.getString("address"),
                                 country = country,
                                 isAdmin = documentSnapshot.getBoolean("admin") ?: false,
-                                profilePictureUrl = documentSnapshot.getString("profilePictureUrl")
-                                    ?: documentSnapshot.getString("photoUrl"),
+                                profilePictureUrl = cleanUrl,
                             )
                             send(RequestState.Success(data = customer))
                         } else {
@@ -140,7 +152,7 @@ class CustomerRepoImpl : CustomerRepository {
                         mapOf(
                             "name" to it.name,
                             "code" to it.code,
-                            "diaCode" to it.diaCode,
+                            "diaCode" to it.dialCode,
                             "flagUrl" to it.flagUrl,
                         )
                     }
@@ -167,6 +179,94 @@ class CustomerRepoImpl : CustomerRepository {
             }
         } catch (e: Exception) {
             onError("Error while updating customer information: ${e.message}")
+        }
+    }
+
+    override suspend fun updateProfilePictureUrl(url: String): RequestState<Unit> = try {
+        val uid = getCurrentUserId() ?: return RequestState.Error("User is not available.")
+        Firebase.firestore.collection("customer")
+            .document(uid)
+            .update("profilePictureUrl", url) // Consistent field name
+            .await()
+        try {
+            val user = FirebaseAuth.getInstance().currentUser
+            if (user != null) {
+                val request = userProfileChangeRequest { photoUri = url.toUri() }
+                user.updateProfile(request).await()
+                user.reload().await()
+            }
+        } catch (_: Exception) {
+            // Ignore auth profile update failure
+        }
+        RequestState.Success(Unit)
+    } catch (e: Exception) {
+        RequestState.Error("Error while updating profile picture URL: ${e.message}")
+    }
+
+
+    override suspend fun updateProfilePhoto(
+        localUrl: Uri,
+        onProcess: (Float) -> Unit
+    ): RequestState<String> = suspendCancellableCoroutine { continuation ->
+        val uid = getCurrentUserId() ?: run {
+            if (continuation.isActive) continuation.resume(RequestState.Error("User is not available."))
+            return@suspendCancellableCoroutine
+        }
+
+        try {
+            MediaManager.get().upload(localUrl)
+                .unsigned("NghiaxEddy")
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String?) {
+                        onProcess(0.0f)
+                    }
+
+                    override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {
+                        val progress = if (totalBytes > 0) bytes.toFloat() / totalBytes.toFloat() else 0f
+                        onProcess(progress)
+                    }
+
+                    override fun onSuccess(requestId: String?, resultData: Map<*, *>) {
+                        val secureUrl = resultData["secure_url"].toString()
+
+                        android.util.Log.d("KiemTraAnh", "Link Cloudinary: $secureUrl")
+
+                        Firebase.firestore.collection("customer")
+                            .document(uid)
+                            .update("profilePictureUrl", secureUrl)
+                            .addOnSuccessListener {
+                                FirebaseAuth.getInstance().currentUser?.let { user ->
+                                    val request = userProfileChangeRequest { photoUri = secureUrl.toUri() }
+                                    user.updateProfile(request)
+                                }
+                                // Chỉ resume khi coroutine chưa bị hủy hoặc đã trả kết quả
+                                if (continuation.isActive) {
+                                    continuation.resume(RequestState.Success(secureUrl))
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                if (continuation.isActive) {
+                                    continuation.resume(RequestState.Error("Failed to save URL: ${e.message}"))
+                                }
+                            }
+                    }
+
+                    override fun onError(requestId: String?, error: ErrorInfo) {
+                        if (continuation.isActive) {
+                            continuation.resume(RequestState.Error("Upload failed: ${error.description}"))
+                        }
+                    }
+
+                    override fun onReschedule(requestId: String?, error: ErrorInfo) {
+                        // Không nên resume ở đây vì upload sẽ được thử lại sau, 
+                        // resume ở đây sẽ khiến app crash nếu sau đó onSuccess được gọi.
+                    }
+                })
+                .dispatch()
+        } catch (e: Exception) {
+            if (continuation.isActive) {
+                continuation.resume(RequestState.Error("Cloudinary Error: ${e.message}. Kiểm tra xem MediaManager đã init chưa."))
+            }
         }
     }
 

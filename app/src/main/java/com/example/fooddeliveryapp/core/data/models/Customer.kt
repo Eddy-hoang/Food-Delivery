@@ -1,5 +1,6 @@
 package com.example.fooddeliveryapp.core.data.models
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,11 +15,12 @@ data class Customer(
     val phoneNumber: PhoneNumber? = null,
     val country: Country? = null,
     val isAdmin: Boolean = false,
-    val profilePictureUrl: String? = null // Đã thêm = null
+    val profilePictureUrl: String? = null
 )
 
 @Serializable
 data class PhoneNumber(
+    @SerialName("CountryCode")
     val dialCode: Int = 0,
     val number: String = ""
 )
