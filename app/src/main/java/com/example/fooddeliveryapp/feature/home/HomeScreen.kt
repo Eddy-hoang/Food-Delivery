@@ -61,7 +61,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     navigateToAuth: () -> Unit,
-    navigateToProfile: () -> Unit
+    navigateToProfile: () -> Unit,
+    navigateToAdminPanel: () -> Unit
 ) {
     val navController = rememberNavController()
     val currentRouter = navController.currentBackStackEntryAsState()
@@ -129,7 +130,7 @@ fun HomeScreen(
                     }
                 )
             },
-            onAdminPanelClick = {}
+            onAdminPanelClick = navigateToAdminPanel
         )
         Box(
             modifier = Modifier
