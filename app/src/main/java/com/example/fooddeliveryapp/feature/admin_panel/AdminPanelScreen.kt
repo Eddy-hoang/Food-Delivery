@@ -25,8 +25,9 @@ import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminPanelScreen(
-    navigateBack: () -> Unit
-){
+    navigateBack: () -> Unit,
+    navigateToManager: (String?) -> Unit
+) {
     Scaffold(
         containerColor = Surface,
         topBar = {
@@ -51,7 +52,7 @@ fun AdminPanelScreen(
                 actions = {
                     IconButton(onClick = { navigateBack }) {
                         Icon(
-                            painter = painterResource(Resources.Icon.Search ),
+                            painter = painterResource(Resources.Icon.Search),
                             contentDescription = "Search icon",
                             tint = IconPrimary
                         )
@@ -68,7 +69,7 @@ fun AdminPanelScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {},
+                onClick = { navigateToManager(null) },
                 containerColor = ButtonPrimary,
                 contentColor = TextPrimary,
                 content = {
