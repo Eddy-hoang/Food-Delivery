@@ -4,12 +4,16 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -52,7 +57,7 @@ fun ProfileScreen(
     val screenReady = profileViewModel.screenReady
     val isFormValid = profileViewModel.isFormValid
     val countriesState = profileViewModel.countriesState
-    val photoState = profileViewModel.photoState
+    val photoState = profileViewModel.photState
 
     var countryDialogOpen by remember { mutableStateOf(false) }
 
@@ -60,12 +65,12 @@ fun ProfileScreen(
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
-    ){
-        uri ->
+    ){ uri ->
         if (uri != null){
-            profileViewModel.pickAndUploadProfilePhoto(uri)
+            profileViewModel.pickAndUploadPhoto(uri)
         }
     }
+    
     val authPhotoUrl = remember {
         FirebaseAuth.getInstance().currentUser?.photoUrl?.toString()
     }
@@ -102,17 +107,102 @@ fun ProfileScreen(
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp)
-                .imePadding()
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            screenReady.DisplayResult(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 24.dp)
+                    .imePadding(),
+                onLoading = { LoadingCard(modifier = Modifier.fillMaxSize()) },
+                onSuccess = {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        ProfilePhotoEditor(
+                            photoUrl = resolvedPhotoUrl,
+                            isUpLoading = photoState.isUploading,
+                            progress = photoState.progress,
+                            onPickClick = {
+                                photoPicker.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        ProfileForm(
+                            modifier = Modifier.weight(1f),
+                            firstName = screenState.firstName,
+                            onFirstNameChange = profileViewModel::updateFirstName,
+                            lastName = screenState.lastName,
+                            onLastNameChange = profileViewModel::updateLastName,
+                            email = screenState.email,
+                            city = screenState.city,
+                            onCityChange = profileViewModel::updateCity,
+                            postalCode = screenState.postalCode,
+                            onPostalCodeChange = profileViewModel::updatePostalCode,
+                            address = screenState.address,
+                            onAddressChange = profileViewModel::updateAddress,
+                            phoneNumber = screenState.phoneNumber?.number,
+                            onPhoneNumberChange = profileViewModel::updatePhoneNumber,
+                            country = screenState.country,
+                            onCountrySelect = { countryDialogOpen = true }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        PrimaryButton(
+                            modifier = Modifier.padding(bottom = 16.dp),
+                            text = "Update",
+                            icon = painterResource(Resources.Icon.Checkmark),
+                            enabled = isFormValid,
+                            onClick = {
+                                profileViewModel.updateCustomer(
+                                    onSuccess = {
+                                        Toast.makeText(
+                                            context,
+                                            "Profile updated successfully!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    },
+                                    onError = { error ->
+                                        Toast.makeText(
+                                            context,
+                                            "Update failed: $error",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                )
+                            }
+                        )
+                    }
+                },
+                onError = { message ->
+                    InfoCard(
+                        modifier = Modifier.fillMaxSize(),
+                        image = Resources.Icon.Dog,
+                        title = "Oops",
+                        subtitle = message
+                    )
+                }
+            )
+
+            // Dialog chọn quốc gia luôn hiển thị trên cùng của Box
             if (countryDialogOpen) {
                 countriesState.DisplayResult(
-                    onLoading = { LoadingCard(modifier = Modifier.fillMaxSize()) },
-                    onError = {},
+                    onLoading = {
+                        AlertDialog(
+                            onDismissRequest = { countryDialogOpen = false },
+                            confirmButton = {},
+                            text = {
+                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = IconPrimary)
+                                }
+                            }
+                        )
+                    },
                     onSuccess = { countries ->
                         CountryPickerDialog(
                             countries = countries,
@@ -123,74 +213,24 @@ fun ProfileScreen(
                                 countryDialogOpen = false
                             }
                         )
+                    },
+                    onError = {
+                        // Nếu có lỗi (như lỗi JSON), hiển thị Dialog với danh sách dự phòng
+                        CountryPickerDialog(
+                            countries = listOf(
+                                com.example.fooddeliveryapp.core.data.models.Country("VN", "Vietnam", 84, "https://flagcdn.com/w320/vn.png"),
+                                com.example.fooddeliveryapp.core.data.models.Country("US", "United States", 1, "https://flagcdn.com/w320/us.png")
+                            ),
+                            selectedCountry = screenState.country,
+                            onDismiss = { countryDialogOpen = false },
+                            onConfirmClick = { selectedCountry ->
+                                profileViewModel.updateCountry(selectedCountry)
+                                countryDialogOpen = false
+                            }
+                        )
                     }
                 )
             }
-            screenReady.DisplayResult(
-                onLoading = { LoadingCard(modifier = Modifier.fillMaxSize()) },
-                onSuccess = {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ProfilePhotoEditor(
-                        photoUrl = resolvedPhotoUrl,
-                        isUpLoading = photoState.isUpLoading,
-                        progress = photoState.progress,
-                        onPickClick = {
-                            photoPicker.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        }
-                    )
-                    ProfileForm(
-                        modifier = Modifier.weight(1f),
-                        firstName = screenState.firstName,
-                        onFirstNameChange = profileViewModel::updateFirstName,
-                        lastName = screenState.lastName,
-                        onLastNameChange = profileViewModel::updateLastName,
-                        email = screenState.email,
-                        city = screenState.city,
-                        onCityChange = profileViewModel::updateCity,
-                        postalCode = screenState.postalCode,
-                        onPostalCodeChange = profileViewModel::updatePostalCode,
-                        address = screenState.address,
-                        onAddressChange = profileViewModel::updateAddress,
-                        phoneNumber = screenState.phoneNumber?.number,
-                        onPhoneNumberChange = profileViewModel::updatePhoneNumber,
-                        country = screenState.country,
-                        onCountrySelect = { countryDialogOpen = true}
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    PrimaryButton(
-                        text = "Update",
-                        icon = painterResource(Resources.Icon.Checkmark),
-                        enabled = isFormValid,
-                        onClick = {
-                            profileViewModel.updateCustomer(
-                                onSuccess = {
-                                    Toast.makeText(
-                                        context,
-                                        "Profile updated successfully!",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                },
-                                onError = { error ->
-                                    Toast.makeText(
-                                        context,
-                                        "Update failed: $error",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            )
-                        }
-                    )
-                },
-                onError = { message ->
-                    InfoCard(
-                        image = Resources.Icon.Dog,
-                        title = "Ops",
-                        subtitle = message
-                    )
-                }
-            )
         }
     }
 }

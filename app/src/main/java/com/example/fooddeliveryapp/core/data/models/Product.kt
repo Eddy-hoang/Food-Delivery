@@ -1,9 +1,13 @@
 package com.example.fooddeliveryapp.core.data.models
 
 import com.example.fooddeliveryapp.ui.theme.Resources
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-data class Product(
+@OptIn(ExperimentalTime::class)
+data class Product (
     val id: String,
+    val createAt: Long = Clock.System.now().toEpochMilliseconds(),
     val title: String,
     val description: String,
     val category: String,
@@ -11,6 +15,10 @@ data class Product(
     val energyValue: Int?,
     val ingredients: String,
     val price: Double,
+    val productImage: String,
+    val isPopular: Boolean = false,
+    val isNew: Boolean = false,
+    val isDiscounted: Boolean = false
 )
 
 enum class ProductCategory(

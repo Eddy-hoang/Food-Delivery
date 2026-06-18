@@ -31,12 +31,10 @@ android {
         }
     }
     compileOptions {
-        // Tối ưu: Đổi từ VERSION_11 lên VERSION_17 để tương thích SDK 35
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        // Tối ưu: Đổi từ "11" lên "17"
         jvmTarget = "17"
     }
     buildFeatures {
@@ -94,10 +92,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
 
     //retrofit
-    // Use stable versions if you encounter issues
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    // Keep only the serialization converter
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 

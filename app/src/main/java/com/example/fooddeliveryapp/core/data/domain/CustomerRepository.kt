@@ -15,8 +15,7 @@ interface CustomerRepository {
         onError: (String) -> Unit
     )
 
-    suspend fun readCustomerFlow(): Flow<RequestState<Customer>>
-
+    fun readCustomerFlow(): Flow<RequestState<Customer>>
     suspend fun updateCustomer(
         customer: Customer,
         onSuccess: () -> Unit,
@@ -24,7 +23,30 @@ interface CustomerRepository {
     )
 
     suspend fun updateProfilePictureUrl(url: String): RequestState<Unit>
-    suspend fun updateProfilePhoto(localUrl: Uri, onProcess:(Float)-> Unit): RequestState<String>
-
+    suspend fun uploadProfilePhoto(localUrl: Uri, onProgress: (Float) -> Unit): RequestState<String>
     suspend fun signOut(): RequestState<Unit>
+
+
+    //Cart functions
+    suspend fun addToCart(
+        productId: String,
+        productTitle: String,
+        quantityToAdd: Int
+    ): RequestState<Unit>
+
+    suspend fun removeFromCart(
+        productId: String,
+        quantityToRemove: Int
+    ): RequestState<Unit>
+
+    suspend fun toggleFavourite(productId: String): RequestState<Boolean>
+    suspend fun isFavourite(productId: String): RequestState<Boolean>
+
+    fun readFavouriteIdFlow(): Flow<RequestState<Set<String>>>
+
+    fun readBadgeCountFlow(): Flow<RequestState<Int>>
+
+    //fun readCartFlow(): Flow<RequestState<List<Cart>>>
+    suspend fun deleteCartItem(productId: String): RequestState<Unit>
+    suspend fun setCartQuantity(productId: String, newQuantity: Int): RequestState<Unit>
 }

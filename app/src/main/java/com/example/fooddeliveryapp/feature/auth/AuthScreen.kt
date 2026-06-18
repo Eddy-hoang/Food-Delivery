@@ -49,7 +49,6 @@ fun AuthScreen(
     val authViewModel: AuthViewModel = koinViewModel()
     val googleAuthUiClient: GoogleUiClient = koinInject()
 
-    // Tên biến được sửa đúng chính tả tiếng Anh: loadingState
     var loadingState by remember { mutableStateOf(false) }
 
     Scaffold { paddingValues ->

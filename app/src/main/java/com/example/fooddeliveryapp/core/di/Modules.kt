@@ -2,11 +2,15 @@ package com.example.fooddeliveryapp.core.di
 
 import com.example.fooddeliveryapp.R
 import com.example.fooddeliveryapp.core.data.auth.GoogleUiClient
+import com.example.fooddeliveryapp.core.data.domain.AdminRepository
 import com.example.fooddeliveryapp.core.data.domain.CountryRepository
 import com.example.fooddeliveryapp.core.data.domain.CountryRepositoryImpl
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
 import com.example.fooddeliveryapp.core.data.remote.RestCountriesApi
 import com.example.fooddeliveryapp.core.data.repoImpl.CustomerRepoImpl
+import com.example.fooddeliveryapp.core.data.repolmpl.AdminRepoImpl
+import com.example.fooddeliveryapp.feature.admin_panel.AdminPanelViewModel
+import com.example.fooddeliveryapp.feature.admin_panel.manage_product.ManageProductViewModel
 import com.example.fooddeliveryapp.feature.auth.AuthViewModel
 import com.example.fooddeliveryapp.feature.home.HomeViewModel
 import com.example.fooddeliveryapp.feature.profile.ProfileViewModel
@@ -31,21 +35,26 @@ val appModule = module {
 
     single {
         Retrofit.Builder()
-            .baseUrl("https://restcountries.com/")
+            .baseUrl("https://files-03.restcountries.com/")
             .client(get())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+
     }
     single <RestCountriesApi>{ get<Retrofit>().create(RestCountriesApi::class.java)  }
     single<CountryRepository> { CountryRepositoryImpl(get()) }
-
     single<FirebaseAuth> { FirebaseAuth.getInstance() }
-
     single<CustomerRepository> { CustomerRepoImpl() }
+    single<AdminRepository> { AdminRepoImpl() }
+
+
 
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
     viewModel { ProfileViewModel(get(),get()) }
+    viewModel { AdminPanelViewModel(get()) }
+    viewModel { ManageProductViewModel(get(), get()) }
+
 
 
     single {

@@ -34,16 +34,17 @@ fun BurgerTextField(
     placeholder: String = "",
     isError: Boolean = false,
 ) {
-    val containerColor = if (text.isNotBlank()) TextPrimary else TextPrimary.copy(0.6f)
+    val textColor = if (text.isNotBlank()) TextPrimary else TextPrimary.copy(alpha = 0.5f)
+    
     Row(
-        modifier
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
             .background(SurfaceLighter)
             .border(
                 width = 1.dp,
                 color = BorderIdle,
                 shape = RoundedCornerShape(6.dp)
             )
-            .clip(RoundedCornerShape(6.dp))
             .clickable { onClick() }
             .padding(
                 vertical = 16.dp,
@@ -62,14 +63,14 @@ fun BurgerTextField(
             )
             Spacer(modifier = Modifier.width(14.dp))
         }
-
+        
         Text(
+            modifier = Modifier.weight(1f),
             text = text.ifBlank { placeholder },
             fontSize = FontSize.REGULAR,
-            color = containerColor,
+            color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false)
         )
 
         if (isError) {

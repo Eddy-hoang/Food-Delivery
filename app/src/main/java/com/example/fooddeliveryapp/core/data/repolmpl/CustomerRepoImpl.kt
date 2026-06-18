@@ -24,6 +24,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.resume
 
+private const val CUSTOMER_COLLECTION = "customer"
+
 class CustomerRepoImpl : CustomerRepository {
     override fun getCurrentUserId(): String? =
         FirebaseAuth.getInstance().currentUser?.uid
@@ -55,12 +57,12 @@ class CustomerRepoImpl : CustomerRepository {
         }
     }
 
-    override suspend fun readCustomerFlow(): Flow<RequestState<Customer>> = channelFlow {
+    override fun readCustomerFlow(): Flow<RequestState<Customer>>  = channelFlow {
         try {
             val userId = getCurrentUserId()
             if (userId != null) {
                 val dataBase = Firebase.firestore
-                dataBase.collection("customer")
+                dataBase.collection(CUSTOMER_COLLECTION)
                     .document(userId)
                     .snapshots()
                     .collectLatest { documentSnapshot ->
@@ -70,6 +72,7 @@ class CustomerRepoImpl : CustomerRepository {
                             val phoneNumber = phoneNumberMap?.let {
                                 val dialCode = (it["CountryCode"] as? Long)?.toInt()
                                 val number = it["number"] as? String
+
                                 if (dialCode != null && number != null) {
                                     PhoneNumber(
                                         dialCode = dialCode,
@@ -86,33 +89,28 @@ class CustomerRepoImpl : CustomerRepository {
                                 val code = map["code"] as? String
                                 val dialCode = (map["diaCode"] as? Long)?.toInt()
                                 val flagUrl = map["flagUrl"] as? String
-                                if (name != null && code != null && dialCode != null && flagUrl != null) {
+                                if (name != null && code != null && dialCode != null && flagUrl != null)
                                     Country(
                                         name = name,
                                         code = code,
                                         dialCode = dialCode,
                                         flagUrl = flagUrl
                                     )
-                                } else null
+                                else null
                             }
-
-                            // Clean URL: Xử lý trường hợp Firestore lưu chuỗi "null" hoặc để trống
-                            val rawUrl = documentSnapshot.getString("profilePictureUrl")
-                                ?: documentSnapshot.getString("photoUrl")
-                            val cleanUrl = if (rawUrl == "null" || rawUrl.isNullOrBlank()) null else rawUrl
 
                             val customer = Customer(
                                 id = documentSnapshot.id,
-                                firstName = documentSnapshot.getString("firstName") ?: "",
-                                lastName = documentSnapshot.getString("lastName") ?: "",
-                                email = documentSnapshot.getString("email") ?: "",
-                                city = documentSnapshot.getString("city"),
+                                firstName = documentSnapshot.get("firstName") as String,
+                                lastName = documentSnapshot.get("lastName") as String,
+                                email = documentSnapshot.get("email") as String,
+                                city = documentSnapshot.get("city") as String?,
                                 postalCode = postalCode,
                                 phoneNumber = phoneNumber,
-                                address = documentSnapshot.getString("address"),
+                                address = documentSnapshot.get("address") as String?,
                                 country = country,
-                                isAdmin = documentSnapshot.getBoolean("admin") ?: false,
-                                profilePictureUrl = cleanUrl,
+                                profilePictureUrl = documentSnapshot.get("photoUrl") as String?,
+                                isAdmin = documentSnapshot.getBoolean("admin") ?: false
                             )
                             send(RequestState.Success(data = customer))
                         } else {
@@ -203,8 +201,7 @@ class CustomerRepoImpl : CustomerRepository {
         RequestState.Error("Error while updating profile picture URL: ${e.message}")
     }
 
-
-    override suspend fun updateProfilePhoto(
+    override suspend fun uploadProfilePhoto(
         localUrl: Uri,
         onProcess: (Float) -> Unit
     ): RequestState<String> = suspendCancellableCoroutine { continuation ->
@@ -222,7 +219,8 @@ class CustomerRepoImpl : CustomerRepository {
                     }
 
                     override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {
-                        val progress = if (totalBytes > 0) bytes.toFloat() / totalBytes.toFloat() else 0f
+                        val progress =
+                            if (totalBytes > 0) bytes.toFloat() / totalBytes.toFloat() else 0f
                         onProcess(progress)
                     }
 
@@ -236,10 +234,10 @@ class CustomerRepoImpl : CustomerRepository {
                             .update("profilePictureUrl", secureUrl)
                             .addOnSuccessListener {
                                 FirebaseAuth.getInstance().currentUser?.let { user ->
-                                    val request = userProfileChangeRequest { photoUri = secureUrl.toUri() }
+                                    val request =
+                                        userProfileChangeRequest { photoUri = secureUrl.toUri() }
                                     user.updateProfile(request)
                                 }
-                                // Chỉ resume khi coroutine chưa bị hủy hoặc đã trả kết quả
                                 if (continuation.isActive) {
                                     continuation.resume(RequestState.Success(secureUrl))
                                 }
@@ -258,8 +256,6 @@ class CustomerRepoImpl : CustomerRepository {
                     }
 
                     override fun onReschedule(requestId: String?, error: ErrorInfo) {
-                        // Không nên resume ở đây vì upload sẽ được thử lại sau, 
-                        // resume ở đây sẽ khiến app crash nếu sau đó onSuccess được gọi.
                     }
                 })
                 .dispatch()
@@ -277,5 +273,47 @@ class CustomerRepoImpl : CustomerRepository {
         } catch (e: Exception) {
             RequestState.Error("Error while signing out ${e.message}")
         }
+    }
+
+    override suspend fun addToCart(
+        productId: String,
+        productTitle: String,
+        quantityToAdd: Int
+    ): RequestState<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun removeFromCart(
+        productId: String,
+        quantityToRemove: Int
+    ): RequestState<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun toggleFavourite(productId: String): RequestState<Boolean> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun isFavourite(productId: String): RequestState<Boolean> {
+        TODO("Not yet implemented")
+    }
+
+    override fun readFavouriteIdFlow(): Flow<RequestState<Set<String>>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun readBadgeCountFlow(): Flow<RequestState<Int>> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteCartItem(productId: String): RequestState<Unit> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun setCartQuantity(
+        productId: String,
+        newQuantity: Int
+    ): RequestState<Unit> {
+        TODO("Not yet implemented")
     }
 }

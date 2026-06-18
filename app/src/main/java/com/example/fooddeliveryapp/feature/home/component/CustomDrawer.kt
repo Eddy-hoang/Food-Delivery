@@ -31,52 +31,44 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun CustomDrawer(
-    profilePictureUrl: String?,
     onProfileClick: () -> Unit,
     onContactUsClick: () -> Unit,
     onSignOutClick: () -> Unit,
     onAdminPanelClick: () -> Unit,
+    isAdmin: Boolean
 ) {
 
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
 
-    val resolvedPhotoUrl = if (!profilePictureUrl.isNullOrBlank() && profilePictureUrl != "null") {
-        profilePictureUrl
-    } else {
-        currentUser?.photoUrl?.toString()
-    }
+    Spacer(modifier = Modifier.height(50.dp))
     Column(
         modifier = Modifier
             .fillMaxHeight()
             .fillMaxWidth(0.6f)
             .padding(12.dp)
     ) {
-
-        Spacer(modifier = Modifier.height(50.dp))
         AsyncImage(
-            model = resolvedPhotoUrl,
+            model = currentUser?.photoUrl ?: "Unknown",
             contentDescription = "Profile picture",
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape),
             contentScale = ContentScale.Crop,
-            placeholder = painterResource(R.drawable.user),
-            error = painterResource(R.drawable.user),
             fallback = painterResource(R.drawable.user)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Welcome ${currentUser?.displayName?.split(" ")?.firstOrNull() ?: "User"}",
             fontFamily = oswaldVariableFont(),
-            fontSize = FontSize.REGULAR,
+            fontSize = FontSize.EXTRA_REGULAR,
             fontWeight = FontWeight.Medium,
             color = TextBrand
         )
         HorizontalDivider(
             modifier = Modifier
                 .fillMaxWidth(0.8f)
-                .padding(end = 12.dp, top = 8.dp)
+                .padding(top = 8.dp, end = 12.dp)
                 .clip(RoundedCornerShape(99.dp)),
             thickness = 2.dp,
             color = Color.Black
@@ -97,10 +89,12 @@ fun CustomDrawer(
             Spacer(modifier = Modifier.height(4.dp))
         }
         Spacer(modifier = Modifier.weight(1f))
-        DrawerItemCard(
-            drawerItem = DrawerItem.AdminPanel,
-            onClick = onAdminPanelClick
-        )
+        if (isAdmin) {
+            DrawerItemCard(
+                drawerItem = DrawerItem.AdminPanel,
+                onClick = onAdminPanelClick
+            )
+        }
         Spacer(modifier = Modifier.height(24.dp))
     }
 }

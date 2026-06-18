@@ -13,6 +13,7 @@ import com.example.fooddeliveryapp.core.data.models.Country
 import com.example.fooddeliveryapp.core.data.models.Customer
 import com.example.fooddeliveryapp.core.data.models.PhoneNumber
 import com.example.fooddeliveryapp.feature.util.RequestState
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
@@ -26,14 +27,13 @@ data class ProfileScreenState(
     val country: Country? = null,
     val postalCode: Int? = null,
     val phoneNumber: PhoneNumber? = null,
-    val isAdmin: Boolean = false,
     val profilePictureUrl: String? = null
 )
 
-data class PhotoUpLoadState(
-    val isUpLoading: Boolean = false,
-    val progress: Float = 0.0f,
-    var error: String? = null
+data class PhotoUploadState(
+    val isUploading: Boolean = false,
+    val progress: Float = 0f,
+    val error: String? = null
 )
 
 class ProfileViewModel(
@@ -47,13 +47,17 @@ class ProfileViewModel(
     var countriesState by mutableStateOf<RequestState<List<Country>>>(RequestState.Loading)
         private set
 
-    var countries: List<Country> = emptyList()
-    var photoState by mutableStateOf(PhotoUpLoadState())
+    private var countries: List<Country> = emptyList()
+    var photState by mutableStateOf(PhotoUploadState())
 
     val isFormValid: Boolean
         get() = with(screenState) {
-            firstName.isNotBlank() && firstName.length >= 2 &&
-                    lastName.isNotBlank() && lastName.length >= 2
+            (firstName.length in 3..50) &&
+                    (lastName.length in 3..50) &&
+                    (city?.length in 3..50) &&
+                    (postalCode != null || postalCode.toString().length in 3..8) &&
+                    (address?.length in 3..50) &&
+                    (phoneNumber?.number?.length in 5..30)
         }
 
     init {
@@ -61,8 +65,9 @@ class ProfileViewModel(
         viewModelScope.launch { loadCountries() }
     }
 
-    private suspend fun loadCountries() = viewModelScope.launch {
-        countryRepository.fetchCountries().onStart { countriesState = RequestState.Loading }
+    private fun loadCountries() = viewModelScope.launch {
+        countryRepository.fetchCountries()
+            .onStart { countriesState = RequestState.Loading }
             .collect { state ->
                 countriesState = state
                 if (state is RequestState.Success) {
@@ -78,15 +83,17 @@ class ProfileViewModel(
     }
 
     private suspend fun observeCustomer() {
-        customerRepository.readCustomerFlow().collect { data ->
-            when (data) {
-                is RequestState.Success -> {
+        customerRepository.readCustomerFlow().collectLatest { data ->
+            when {
+                data.isSuccess() -> {
                     val fetched = data.getSuccessData()
                     val dial = fetched.phoneNumber?.dialCode
+
                     val mappedCountry =
                         if (dial != null && countries.isNotEmpty())
-                            countries.firstOrNull { it.dialCode == dial }
+                            countries.firstOrNull() { it.dialCode == dial }
                         else screenState.country
+
 
                     screenState = ProfileScreenState(
                         id = fetched.id,
@@ -98,13 +105,12 @@ class ProfileViewModel(
                         address = fetched.address,
                         phoneNumber = fetched.phoneNumber,
                         country = mappedCountry,
-                        profilePictureUrl = fetched.profilePictureUrl,
-                        isAdmin = fetched.isAdmin
+                        profilePictureUrl = fetched.profilePictureUrl
                     )
                     screenReady = RequestState.Success(Unit)
                 }
 
-                is RequestState.Error -> {
+                data.isError() -> {
                     screenReady = RequestState.Error(data.getErrorMessage())
                 }
 
@@ -134,11 +140,10 @@ class ProfileViewModel(
     }
 
     fun updatePhoneNumber(value: String) {
-        val currentDialCode = screenState.phoneNumber?.dialCode ?: 0
         screenState = screenState.copy(
             phoneNumber = PhoneNumber(
-                dialCode = currentDialCode,
-                number = value
+                dialCode = screenState.phoneNumber?.dialCode ?: 0,
+                number = value,
             )
         )
     }
@@ -146,8 +151,12 @@ class ProfileViewModel(
     fun updateCountry(value: Country) {
         screenState = screenState.copy(
             country = value,
-            phoneNumber = screenState.phoneNumber?.copy(dialCode = value.dialCode)
-                ?: PhoneNumber(dialCode = value.dialCode, number = "")
+            phoneNumber = screenState.phoneNumber?.copy(
+                dialCode = value.dialCode
+            ) ?: PhoneNumber(
+                dialCode = value.dialCode,
+                number = screenState.phoneNumber?.number ?: ""
+            )
         )
     }
 
@@ -175,8 +184,7 @@ class ProfileViewModel(
                     address = screenState.address,
                     phoneNumber = screenState.phoneNumber,
                     country = persistedCountry,
-                    profilePictureUrl = screenState.profilePictureUrl,
-                    isAdmin = screenState.isAdmin
+                    profilePictureUrl = screenState.profilePictureUrl
                 ),
                 onSuccess = onSuccess,
                 onError = onError
@@ -184,30 +192,37 @@ class ProfileViewModel(
         }
     }
 
-    fun pickAndUploadProfilePhoto(localUrl: Uri) {
-        viewModelScope.launch {
-            Log.d("Cloudinary", "Bắt đầu upload: $localUrl")
-            photoState = PhotoUpLoadState(isUpLoading = true, progress = 0f)
-            
-            // updateProfilePhoto trong Repo của bạn đã bao gồm việc lưu URL vào Firestore
-            val result = customerRepository.updateProfilePhoto(localUrl = localUrl) { uploadProgress ->
-                photoState = photoState.copy(isUpLoading = true, progress = uploadProgress)
-            }
 
-            when (result) {
+    fun pickAndUploadPhoto(localUrl: Uri) {
+        viewModelScope.launch {
+            photState = PhotoUploadState(isUploading = true, progress = 0f)
+            when (val result = customerRepository.uploadProfilePhoto(
+                localUrl = localUrl
+            ) { uploadProgress ->
+                photState = photState.copy(isUploading = true, progress = uploadProgress)
+            }) {
                 is RequestState.Success -> {
-                    Log.d("Cloudinary", "Upload thành công! URL: ${result.data}")
-                    // Cập nhật giao diện với URL mới và TẮT LOADING
-                    screenState = screenState.copy(profilePictureUrl = result.data)
-                    photoState = PhotoUpLoadState(isUpLoading = false, error = null)
+                    val url = result.data
+                    when (val uploaded = customerRepository.updateProfilePictureUrl(url)) {
+                        is RequestState.Success -> {
+                            screenState = screenState.copy(profilePictureUrl = url)
+                            photState =
+                                PhotoUploadState(isUploading = true, progress = 1f, error = null)
+                        }
+
+                        is RequestState.Error -> {
+                            photState = PhotoUploadState(error = uploaded.message)
+                        }
+
+                        else -> Unit
+                    }
                 }
+
                 is RequestState.Error -> {
-                    Log.e("Cloudinary", "Lỗi upload: ${result.message}")
-                    photoState = PhotoUpLoadState(isUpLoading = false, error = result.message)
+                    photState = PhotoUploadState(error = result.message)
                 }
-                else -> {
-                    photoState = photoState.copy(isUpLoading = false)
-                }
+
+                else -> Unit
             }
         }
     }

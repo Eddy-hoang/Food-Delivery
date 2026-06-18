@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -39,7 +38,7 @@ fun ProfileForm(
 ) {
     Column(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .verticalScroll(state = rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -47,14 +46,14 @@ fun ProfileForm(
             value = firstName,
             onValueChange = onFirstNameChange,
             placeholder = "First Name",
-            error = firstName.length !in 3..10
+            error = firstName.length !in 2..20
         )
 
         BurgerTextField(
             value = lastName,
             onValueChange = onLastNameChange,
             placeholder = "Last Name",
-            error = lastName.length !in 3..50
+            error = lastName.length !in 2..20
         )
 
         BurgerTextField(
@@ -66,24 +65,22 @@ fun ProfileForm(
 
         BurgerTextField(
             modifier = Modifier.fillMaxWidth(),
-            text = country?.name ?: "",
+            text = country?.name ?: "Select Country",
             iconUrl = country?.flagUrl,
             onClick = onCountrySelect,
-            placeholder = "country"
+            placeholder = "Country"
         )
 
         BurgerTextField(
             value = city ?: "",
             onValueChange = onCityChange,
-            placeholder = "City",
-            error = city != null && city.length !in 3..50
+            placeholder = "City"
         )
 
         BurgerTextField(
-            value = "${postalCode ?: ""}",
+            value = if (postalCode != null) "$postalCode" else "",
             onValueChange = { onPostalCodeChange(it.toIntOrNull()) },
             placeholder = "Postal Code",
-            error = postalCode != null && postalCode.toString().length !in 3..8,
             keyBoardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number
             )
@@ -93,7 +90,6 @@ fun ProfileForm(
             value = address ?: "",
             onValueChange = onAddressChange,
             placeholder = "Address",
-            error = address != null && address.length !in 3..50,
             keyBoardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text
             )
@@ -104,7 +100,7 @@ fun ProfileForm(
             verticalAlignment = Alignment.CenterVertically
         ) {
             BurgerTextField(
-                modifier = Modifier.width(120.dp),
+                modifier = Modifier.width(100.dp),
                 text = if (country?.dialCode != null) "+${country.dialCode}" else "+-",
                 iconUrl = country?.flagUrl,
                 onClick = onCountrySelect,
@@ -116,13 +112,10 @@ fun ProfileForm(
                 value = phoneNumber ?: "",
                 onValueChange = onPhoneNumberChange,
                 placeholder = "Phone Number",
-                error = phoneNumber != null && phoneNumber.length !in 5..30,
                 keyBoardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Phone
                 )
             )
         }
-
-
     }
 }

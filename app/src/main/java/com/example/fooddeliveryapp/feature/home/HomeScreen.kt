@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,7 @@ import com.example.fooddeliveryapp.feature.home.domain.BottomBarDestinations
 import com.example.fooddeliveryapp.feature.home.domain.CustomDrawerState
 import com.example.fooddeliveryapp.feature.home.domain.isOpened
 import com.example.fooddeliveryapp.feature.home.domain.reverse
+import com.example.fooddeliveryapp.feature.nav.HomeTab
 import com.example.fooddeliveryapp.feature.nav.Screens
 import com.example.fooddeliveryapp.ui.theme.BrandBrown
 import com.example.fooddeliveryapp.ui.theme.FontSize
@@ -60,14 +62,20 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    startTab: HomeTab = HomeTab.Products,
     navigateToAuth: () -> Unit,
     navigateToProfile: () -> Unit,
-    navigateToAdminPanel: () -> Unit
+    navigateToAdminPanel: () -> Unit,
+    navigateToDetails: (String) -> Unit,
+    navigateToCheckout: (Double) -> Unit,
+    navigateToMenu: () -> Unit,
+    navigateToProductCategory: (String) -> Unit
 ) {
     val navController = rememberNavController()
     val currentRouter = navController.currentBackStackEntryAsState()
 
     val viewModel = koinViewModel<HomeViewModel>()
+    val isAdmin by viewModel.isAdmin.collectAsState()
     val context = LocalContext.current
 
     // Lấy thông tin khách hàng real-time từ HomeViewModel
@@ -77,11 +85,11 @@ fun HomeScreen(
         derivedStateOf {
             val route = currentRouter.value?.destination?.route.toString()
             when {
-                route.contains(BottomBarDestinations.ProductOverViewScreen.screen.toString()) -> BottomBarDestinations.ProductOverViewScreen
+                route.contains(BottomBarDestinations.ProductOverviewScreen.screen.toString()) -> BottomBarDestinations.ProductOverviewScreen
                 route.contains(BottomBarDestinations.CartScreen.screen.toString()) -> BottomBarDestinations.CartScreen
                 route.contains(BottomBarDestinations.NotificationScreen.screen.toString()) -> BottomBarDestinations.NotificationScreen
                 route.contains(BottomBarDestinations.CategoriesSceen.screen.toString()) -> BottomBarDestinations.CategoriesSceen
-                else -> BottomBarDestinations.ProductOverViewScreen
+                else -> BottomBarDestinations.ProductOverviewScreen
             }
         }
     }
@@ -115,7 +123,6 @@ fun HomeScreen(
             .systemBarsPadding()
     ){
         CustomDrawer(
-            profilePictureUrl = customer?.profilePictureUrl,
             onProfileClick = navigateToProfile,
             onContactUsClick = {},
             onSignOutClick = {
@@ -130,7 +137,8 @@ fun HomeScreen(
                     }
                 )
             },
-            onAdminPanelClick = navigateToAdminPanel
+            onAdminPanelClick = navigateToAdminPanel,
+            isAdmin = isAdmin,
         )
         Box(
             modifier = Modifier
@@ -204,11 +212,11 @@ fun HomeScreen(
                     NavHost(
                         modifier = Modifier.weight(1f),
                         navController = navController,
-                        startDestination = Screens.ProductOverViewScreen
+                        startDestination = Screens.ProductOverviewScreen
                     ) {
-                        composable<Screens.ProductOverViewScreen> { }
+                        composable<Screens.ProductOverviewScreen> { }
                         composable<Screens.Cart> { }
-                        composable<Screens.Notification> { }
+                        composable<Screens.Notifications> { }
                         composable<Screens.Categories> { }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
@@ -220,7 +228,7 @@ fun HomeScreen(
                             onSelect = { destination ->
                                 navController.navigate(destination.screen) {
                                     launchSingleTop = true
-                                    popUpTo<Screens.ProductOverViewScreen> {
+                                    popUpTo<Screens.ProductOverviewScreen> {
                                         saveState = true
                                         inclusive = false
                                     }

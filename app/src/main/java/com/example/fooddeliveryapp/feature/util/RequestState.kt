@@ -1,6 +1,8 @@
 package com.example.fooddeliveryapp.feature.util
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 
 sealed class RequestState<out T> {
     object Idle : RequestState<Nothing>()
@@ -20,23 +22,26 @@ sealed class RequestState<out T> {
 
 @Composable
 fun <T> RequestState<T>.DisplayResult(
+    modifier: Modifier = Modifier,
     onIdle: (@Composable () -> Unit)? = null,
     onLoading: @Composable () -> Unit,
     onSuccess: @Composable (T) -> Unit,
     onError: @Composable (String) -> Unit,
 ) {
-    when (this) {
-        is RequestState.Idle -> {
-            onIdle?.invoke()
-        }
-        is RequestState.Loading -> {
-            onLoading()
-        }
-        is RequestState.Success -> {
-            onSuccess(data)
-        }
-        is RequestState.Error -> {
-            onError(message)
+    Box(modifier = modifier) {
+        when (this@DisplayResult) {
+            is RequestState.Idle -> {
+                onIdle?.invoke()
+            }
+            is RequestState.Loading -> {
+                onLoading()
+            }
+            is RequestState.Success -> {
+                onSuccess(data)
+            }
+            is RequestState.Error -> {
+                onError(message)
+            }
         }
     }
 }

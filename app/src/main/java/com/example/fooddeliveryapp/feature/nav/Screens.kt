@@ -3,29 +3,40 @@ package com.example.fooddeliveryapp.feature.nav
 import kotlinx.serialization.Serializable
 
 @Serializable
+enum class HomeTab{
+    Products,
+    Cart,
+    Notifications,
+    Categories
+}
+
+@Serializable
 sealed class Screens {
     @Serializable
-    data object SplashScreen : Screens()
+    data object SplashScreen: Screens()
 
     @Serializable
-    data object AuthScreen : Screens()
+    data object AuthScreen: Screens()
 
     @Serializable
-    data object HomeGraph : Screens()
+    data class HomeGraph(
+        val start: HomeTab = HomeTab.Products
+    ): Screens()
 
     @Serializable
-    data object ProductOverViewScreen : Screens()
+    data object ProductOverviewScreen: Screens()
 
     @Serializable
-    data object Cart : Screens()
+    data object Cart: Screens()
 
     @Serializable
-    data object Notification : Screens()
+    data object Notifications: Screens()
 
     @Serializable
-    data object Categories : Screens()
+    data object Categories: Screens()
+
     @Serializable
-    data object Profile : Screens()
+    data object Profile: Screens()
 
     @Serializable
     data object AdminPanel: Screens()
@@ -33,5 +44,20 @@ sealed class Screens {
     @Serializable
     data class ManageProduct(
         val id: String? = null
+    ): Screens()
+
+    @Serializable
+    data class DetailsScreen(
+        val id: String
+    ): Screens()
+
+    @Serializable
+    data class Checkout(
+        val amount: Double
+    ): Screens()
+
+    @Serializable
+    data class ProductCategoryScreen(
+        val category: String
     ): Screens()
 }

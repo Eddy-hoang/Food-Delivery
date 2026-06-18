@@ -12,10 +12,14 @@ class FoodApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+
         val config = mapOf(
-            "cloud_name" to "dmjrv1vzw"
+            "cloud_name" to "dmjrv1vzw",
+            "api_key" to "283875926324232",
+            "api_secret" to "p8dUf8ld6oNnxIxj1fLfTDbwSn0"
         )
-        
+        MediaManager.init(this, config)
+
         try {
             MediaManager.init(this, config)
             Log.d("Cloudinary", "MediaManager đã khởi tạo thành công")

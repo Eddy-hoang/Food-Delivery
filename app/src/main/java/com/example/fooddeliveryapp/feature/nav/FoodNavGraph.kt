@@ -28,7 +28,7 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                     }
                 },
                 navigaToHome = {
-                    navController.navigate(Screens.HomeGraph) {
+                    navController.navigate(Screens.HomeGraph()) {
                         popUpTo<Screens.SplashScreen> { inclusive = true }
                     }
                 }
@@ -37,7 +37,7 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
         composable<Screens.AuthScreen> {
             AuthScreen(
                 navigateToHome = {
-                    navController.navigate(Screens.HomeGraph) {
+                    navController.navigate(Screens.HomeGraph()) {
                         popUpTo<Screens.AuthScreen> { inclusive = true }
                     }
                 }
@@ -56,7 +56,12 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                 },
                 navigateToAdminPanel = {
                     navController.navigate(Screens.AdminPanel)
-                }
+                },
+                startTab = HomeTab.Products,  // nếu HomeScreen yêu cầu Int; nếu là nullable thì truyền null
+                navigateToDetails = { /* chưa implement, tạm để trống */ },
+                navigateToCheckout = { /* chưa implement */ },
+                navigateToMenu = { /* chưa implement */ },
+                navigateToProductCategory = { /* chưa implement */ }
             )
         }
 
