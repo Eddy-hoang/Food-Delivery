@@ -7,7 +7,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 data class Product (
     val id: String,
-    val createAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val title: String,
     val description: String,
     val category: String,

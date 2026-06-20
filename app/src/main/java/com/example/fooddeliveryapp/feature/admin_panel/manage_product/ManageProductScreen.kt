@@ -500,7 +500,7 @@ fun ManageProductScreen(
                 enabled = isFormValid && !productImageUploadState.isLoading(),
                 onClick = {
                     if (id != null) {
-                        viewModel.updateImageState()
+                        viewModel.updateProductDetails()
                     } else {
                         viewModel.createNewProduct()
                     }

@@ -13,11 +13,15 @@ import com.example.fooddeliveryapp.core.data.models.ProductCategory
 import com.example.fooddeliveryapp.feature.util.RequestState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch // 🔴 BỔ SUNG IMPORT
+import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 data class ManageProductState(
     val id: String = UUID.randomUUID().toString(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val title: String = "",
     val description: String = "",
     val selectedCategory: ProductCategory? = null,
@@ -138,10 +142,6 @@ class ManageProductViewModel(
         screenState = screenState.copy(ingredients = value)
     }
 
-    fun updateEngredients(value: Int?) {
-        screenState = screenState.copy(energyValue = value)
-    }
-
     fun updatePrice(value: Double) {
         screenState = screenState.copy(price = value)
     }
@@ -223,6 +223,7 @@ class ManageProductViewModel(
 
                 val productToCreate = Product(
                     id = screenState.id,
+                    createdAt = screenState.createdAt,
                     title = screenState.title,
                     description = screenState.description,
                     category = screenState.selectedCategory!!.title,
@@ -249,7 +250,7 @@ class ManageProductViewModel(
         _createProductState.value = RequestState.Idle
     }
 
-    fun updateImageState() {
+    fun updateProductDetails() {
         viewModelScope.launch {
             _createProductState.value = RequestState.Loading
 
@@ -259,6 +260,8 @@ class ManageProductViewModel(
                 return@launch
             }
             val updateProduct = base.copy(
+                id = screenState.id,
+                createdAt = screenState.createdAt,
                 title = screenState.title,
                 description = screenState.description,
                 productImage = screenState.productImage,
