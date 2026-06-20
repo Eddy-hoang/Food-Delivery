@@ -78,7 +78,7 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                 navigateBack = {
                     navController.navigateUp()
                 },
-                navigateToManager = { id ->
+                navigateToManageProduct = {id ->
                     navController.navigate(Screens.ManageProduct(id = id))
                 }
             )

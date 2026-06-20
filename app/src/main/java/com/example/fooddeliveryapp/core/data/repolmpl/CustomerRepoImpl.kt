@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.auth.userProfileChangeRequest
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.snapshots
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,8 @@ import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.resume
 
 private const val CUSTOMER_COLLECTION = "customer"
+private const val FAVOURITE_SUBCOLLECTION = "favourite"
+
 
 class CustomerRepoImpl : CustomerRepository {
     override fun getCurrentUserId(): String? =
@@ -275,45 +278,127 @@ class CustomerRepoImpl : CustomerRepository {
         }
     }
 
-    override suspend fun addToCart(
-        productId: String,
-        productTitle: String,
-        quantityToAdd: Int
-    ): RequestState<Unit> {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun removeFromCart(
-        productId: String,
-        quantityToRemove: Int
-    ): RequestState<Unit> {
-        TODO("Not yet implemented")
-    }
+//    override suspend fun addToCart(
+//        productId: String,
+//        productTitle: String,
+//        quantityToAdd: Int
+//    ): RequestState<Unit> {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override suspend fun removeFromCart(
+//        productId: String,
+//        quantityToRemove: Int
+//    ): RequestState<Unit> {
+//        TODO("Not yet implemented")
+//    }
 
     override suspend fun toggleFavourite(productId: String): RequestState<Boolean> {
-        TODO("Not yet implemented")
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("User not available.")
+            if (productId.isBlank()) return RequestState.Error("Invalid product id.")
+
+            val favDoc = Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(FAVOURITE_SUBCOLLECTION)
+                .document(productId)
+
+            val isFavouriteToggle = Firebase.firestore.runTransaction { trx ->
+                val snap = trx.get(favDoc)
+                if (snap.exists()) {
+                    trx.delete(favDoc)
+                    false
+                }  else {
+                    trx.set(
+                        favDoc,
+                        mapOf(
+                            "productId" to productId,
+                            "createdAt" to FieldValue.serverTimestamp(),
+                        )
+                    )
+                    true
+                }
+            }.await()
+            RequestState.Success(isFavouriteToggle)
+        } catch (e: Exception){
+            RequestState.Error("Failed to toggle favourite: ${e.message}")
+        }
     }
 
     override suspend fun isFavourite(productId: String): RequestState<Boolean> {
-        TODO("Not yet implemented")
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("User not available.")
+            if (productId.isBlank()) return RequestState.Error("Invalid product id.")
+
+            val isFavDoc = Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(FAVOURITE_SUBCOLLECTION)
+                .document(productId)
+                .get()
+                .await()
+
+
+            RequestState.Success(isFavDoc.exists())
+        } catch (e: Exception){
+            RequestState.Error("Failed to read favourite state: ${e.message}")
+        }
     }
 
-    override fun readFavouriteIdFlow(): Flow<RequestState<Set<String>>> {
-        TODO("Not yet implemented")
+
+    override fun readFavouriteIdFlow(): Flow<RequestState<Set<String>>>  = channelFlow {
+        try {
+            val uid = getCurrentUserId()
+            if (uid.isNullOrBlank()){
+                send(RequestState.Error("User not available."))
+                return@channelFlow
+            }
+            send(RequestState.Loading)
+            Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(FAVOURITE_SUBCOLLECTION)
+                .snapshots()
+                .collectLatest { snapshots ->
+                    val ids = snapshots.documents.map { it.id }.toSet()
+                    send(RequestState.Success(ids))
+                }
+        } catch (e: Exception){
+            RequestState.Error("Failed to read favourites: ${e.message}")
+        }
     }
 
-    override fun readBadgeCountFlow(): Flow<RequestState<Int>> {
-        TODO("Not yet implemented")
-    }
 
-    override suspend fun deleteCartItem(productId: String): RequestState<Unit> {
-        TODO("Not yet implemented")
-    }
+//    override fun readBadgeCountFlow(): Flow<RequestState<Int>> = channelFlow {
+//        try {
+//            val uid = getCurrentUserId()
+//            if (uid.isNullOrBlank()){
+//                send(RequestState.Error("User not available."))
+//                return@channelFlow
+//            }
+//            send(RequestState.Loading)
+//            Firebase.firestore
+//                .collection(com.stephennnamani.burgerrestaurantapp.core.data.repoImpl.CUSTOMER_COLLECTION)
+//                .document(uid)
+//                .collection(CART_SUBCOLLECTION)
+//                .snapshots()
+//                .collectLatest { snapshots ->
+//                    send(RequestState.Success(snapshots.size()))
+//                }
+//        } catch (e: Exception){
+//            RequestState.Error("Failed to read size items in the cart.: ${e.message}")
+//        }
+//    }
 
-    override suspend fun setCartQuantity(
-        productId: String,
-        newQuantity: Int
-    ): RequestState<Unit> {
-        TODO("Not yet implemented")
-    }
+//    override suspend fun deleteCartItem(productId: String): RequestState<Unit> {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override suspend fun setCartQuantity(
+//        productId: String,
+//        newQuantity: Int
+//    ): RequestState<Unit> {
+//        TODO("Not yet implemented")
+//    }
 }

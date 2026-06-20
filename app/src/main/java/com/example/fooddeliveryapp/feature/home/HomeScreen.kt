@@ -57,6 +57,7 @@ import com.example.fooddeliveryapp.ui.theme.IconPrimary
 import com.example.fooddeliveryapp.ui.theme.Surface
 import com.example.fooddeliveryapp.ui.theme.TextPrimary
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
+import com.stephennnamani.burgerrestaurantapp.feature.home.product_overview.ProductOverviewScreen
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -214,7 +215,11 @@ fun HomeScreen(
                         navController = navController,
                         startDestination = Screens.ProductOverviewScreen
                     ) {
-                        composable<Screens.ProductOverviewScreen> { }
+                        composable<Screens.ProductOverviewScreen> {
+                            ProductOverviewScreen (
+                                onProductClick = navigateToDetails
+                            )
+                        }
                         composable<Screens.Cart> { }
                         composable<Screens.Notifications> { }
                         composable<Screens.Categories> { }

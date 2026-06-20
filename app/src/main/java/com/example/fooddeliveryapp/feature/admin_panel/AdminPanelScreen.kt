@@ -1,5 +1,6 @@
 package com.example.fooddeliveryapp.feature.admin_panel
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,12 +51,13 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AdminPanelScreen(
     navigateBack: () -> Unit,
-    navigateToManager: (String?) -> Unit
-) {
+    navigateToManageProduct: (String?) -> Unit
+){
     val viewModel = koinViewModel<AdminPanelViewModel>()
-    val productState = viewModel.products.collectAsState()
+    val products = viewModel.products.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     var searchBarVisible by remember { mutableStateOf(false) }
+
 
     Scaffold(
         containerColor = Surface,
@@ -149,12 +151,11 @@ fun AdminPanelScreen(
                 }
             }
         },
-
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navigateToManager(null) },
+                onClick = {navigateToManageProduct(null)},
                 containerColor = ButtonPrimary,
-                contentColor = TextPrimary,
+                contentColor = IconPrimary,
                 content = {
                     Icon(
                         painter = painterResource(Resources.Icon.Plus),
@@ -163,50 +164,55 @@ fun AdminPanelScreen(
                 }
             )
         }
-    ) { paddingValues ->
-        productState.value.DisplayResult(
+
+    ) {paddingValues ->
+        products.value.DisplayResult(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            onLoading = { LoadingCard(modifier = Modifier.fillMaxSize()) },
+                .padding(
+                    top = paddingValues.calculateTopPadding(),
+                    bottom = paddingValues.calculateBottomPadding()
+                ),
+            onLoading = { LoadingCard(modifier =Modifier.fillMaxSize()) },
             onSuccess = { latestProducts ->
+                Log.d("AdminPanel", "Success, size = ${latestProducts.size}")
                 AnimatedContent(
-                    targetState = latestProducts.isNotEmpty(),
-                    label = "list_animation",
-                    modifier = Modifier.fillMaxSize()
-                ) { hasProducts ->
-                    if (hasProducts) {
+                    targetState = latestProducts
+                ) { productList ->
+                    if (productList.isNotEmpty()){
                         LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(items = latestProducts, key = { it.id }) { product ->
+                            items(
+                                items = latestProducts,
+                                key = {it.id}
+                            ){ product ->
                                 ProductCard(
                                     product = product,
-                                    onClick = { navigateToManager(product.id) }
+                                    onClick = {
+                                        navigateToManageProduct(product.id)
+                                    }
                                 )
                             }
                         }
                     } else {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            InfoCard(
-                                image = Resources.Icon.Dog,
-                                title = "Oops",
-                                subtitle = "Products not found"
-                            )
-                        }
+                        InfoCard(
+                            image = Resources.Icon.Dog,
+                            title = "Oops!",
+                            subtitle = "Product not found"
+                        )
                     }
                 }
             },
             onError = { message ->
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    InfoCard(image = Resources.Icon.Dog, title = "Oops", subtitle = message)
-                }
+                Log.d("AdminPanel", "Error, message = $message")
+                InfoCard(
+                    image = Resources.Icon.Dog,
+                    title = "Oops!",
+                    subtitle = message
+                )
             }
         )
     }

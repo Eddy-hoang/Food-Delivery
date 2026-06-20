@@ -148,7 +148,10 @@ class AdminRepoImpl() : AdminRepository {
             "ingredients" to product.ingredients,
             "price" to product.price,
             "productImage" to product.productImage,
-            "createAt" to com.google.firebase.Timestamp.now()
+            "createdAt" to com.google.firebase.Timestamp.now(), // Thống nhất dùng createdAt
+            "new" to product.isNew,
+            "popular" to product.isPopular,
+            "discounted" to product.isDiscounted
         )
         Firebase.firestore.collection("products").document(product.id).set(productMap).await()
     }
@@ -173,7 +176,7 @@ class AdminRepoImpl() : AdminRepository {
         send(RequestState.Loading)
         try {
             Firebase.firestore.collection("products")
-                .orderBy("createAt", Query.Direction.DESCENDING)
+                .orderBy("createdAt", Query.Direction.DESCENDING) // Dùng createdAt
                 .limit(10)
                 .snapshots()
                 .collectLatest { snapshot ->
@@ -208,7 +211,23 @@ class AdminRepoImpl() : AdminRepository {
             val database = Firebase.firestore
             val productCollection = database.collection("products")
             val docRef = productCollection.document(product.id)
-            docRef.set(product).await()
+            
+            // Sử dụng update để tránh ghi đè làm mất trường createdAt
+            val updates = hashMapOf<String, Any?>(
+                "title" to product.title,
+                "description" to product.description,
+                "category" to product.category,
+                "allergyAdvice" to product.allergyAdvice,
+                "energyValue" to product.energyValue,
+                "ingredients" to product.ingredients,
+                "price" to product.price,
+                "productImage" to product.productImage,
+                "new" to product.isNew,
+                "popular" to product.isPopular,
+                "discounted" to product.isDiscounted
+            )
+            
+            docRef.update(updates).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(
