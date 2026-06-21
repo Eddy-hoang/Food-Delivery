@@ -100,4 +100,7 @@ dependencies {
     //Cloudinary
     implementation(libs.cloudinary.android)
 
+    //Momo
+    implementation("com.github.momodevelopment:androidsdkV2.2:1.1")
+
 }

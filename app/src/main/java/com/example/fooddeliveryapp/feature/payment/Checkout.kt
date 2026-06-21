@@ -70,7 +70,6 @@ import com.example.fooddeliveryapp.ui.theme.SurfaceLighter
 import com.example.fooddeliveryapp.ui.theme.TextPrimary
 import com.example.fooddeliveryapp.ui.theme.TextWhite
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
-import com.stephennnamani.burgerrestaurantapp.feature.payment.DeliveryFormatter
 import org.koin.androidx.compose.koinViewModel
 
 enum class PaymentMethod {

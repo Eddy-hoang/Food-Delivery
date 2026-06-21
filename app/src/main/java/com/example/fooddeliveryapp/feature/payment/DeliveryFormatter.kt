@@ -1,4 +1,4 @@
-package com.stephennnamani.burgerrestaurantapp.feature.payment
+package com.example.fooddeliveryapp.feature.payment
 
 import com.example.fooddeliveryapp.core.data.models.Customer
 

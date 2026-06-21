@@ -37,6 +37,18 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
+// Set to true to connect to local Firebase Functions emulator (e.g., http://10.0.2.2:5001)
+// Set to false to connect to the deployed production Firebase Functions (https://us-central1-...)
+private const val USE_EMULATOR = true
+
+private fun getBaseUrl(): String {
+    return if (USE_EMULATOR) {
+        "http://10.0.2.2:5001/food-delivery-app-f8eaf/us-central1/api/"
+    } else {
+        "https://us-central1-food-delivery-app-f8eaf.cloudfunctions.net/api/"
+    }
+}
+
 val appModule = module {
 
     single {
@@ -49,14 +61,13 @@ val appModule = module {
 
     single {
         Retrofit.Builder()
-            // Đảm bảo URL này trỏ đến backend Firebase Functions của bạn
-            .baseUrl("https://us-central1-food-delivery-app-f8eaf.cloudfunctions.net/api/") 
+            .baseUrl(getBaseUrl())
             .client(get())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    single <RestCountriesApi>{ 
+    single <RestCountriesApi>{
         Retrofit.Builder()
             .baseUrl("https://files-03.restcountries.com/")
             .client(get())
@@ -66,7 +77,7 @@ val appModule = module {
     }
 
     single <PaymentApi> { get<Retrofit>().create(PaymentApi::class.java) }
-    
+
     single<CountryRepository> { CountryRepositoryImpl(get()) }
     single<FirebaseAuth> { FirebaseAuth.getInstance() }
     single<CustomerRepository> { CustomerRepoImpl() }
@@ -74,7 +85,7 @@ val appModule = module {
     single<ProductRepository> { ProductRepoImpl() }
     single<CartRepository> { CartRepoImpl(get(), get()) }
     single<PaymentRepository> { PaymentRepositoryImpl(get()) }
-    
+
     single { MoMoPaymentCoordinator(androidContext()) }
 
 

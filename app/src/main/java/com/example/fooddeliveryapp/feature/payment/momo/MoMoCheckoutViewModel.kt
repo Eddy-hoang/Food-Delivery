@@ -69,7 +69,8 @@ class MoMoCheckoutViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(state = RequestState.Loading, toast = "") }
 
-            val amount = totalAmount.toLong()
+            val exchangeRate = 25400.0
+            val amount = (totalAmount * exchangeRate).toLong()
             val orderId = "momo-order-${System.currentTimeMillis()}"
             val requestId = UUID.randomUUID().toString()
             val orderInfo = "Payment for Food Delivery Order"
