@@ -202,7 +202,7 @@ private fun CartSummaryCard(
                 color = Color.Black.copy(0.8f)
             )
 
-            SummaryRow(label = "Total Amount", value = "£${"%.2f".format(totalAmount)}", bold = true)
+            SummaryRow(label = "Total Amount", value = "${"%.2f".format(totalAmount)}đ", bold = true)
 
             Spacer(modifier = Modifier.height(12.dp))
 

@@ -50,7 +50,7 @@ val appModule = module {
     single {
         Retrofit.Builder()
             // Đảm bảo URL này trỏ đến backend Firebase Functions của bạn
-            .baseUrl("https://your-firebase-region-project-id.cloudfunctions.net/api/") 
+            .baseUrl("https://us-central1-food-delivery-app-f8eaf.cloudfunctions.net/api/") 
             .client(get())
             .addConverterFactory(GsonConverterFactory.create())
             .build()

@@ -1,4 +1,4 @@
-package com.stephennnamani.burgerrestaurantapp.feature.home.categories
+package com.example.fooddeliveryapp.feature.home.categories
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,6 +29,7 @@ import com.example.fooddeliveryapp.ui.theme.Resources
 import com.example.fooddeliveryapp.ui.theme.Surface
 import com.example.fooddeliveryapp.ui.theme.TextPrimary
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
+import com.stephennnamani.burgerrestaurantapp.feature.home.categories.FoodMenuViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

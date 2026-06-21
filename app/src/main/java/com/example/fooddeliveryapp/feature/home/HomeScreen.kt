@@ -61,6 +61,7 @@ import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
 import com.stephennnamani.burgerrestaurantapp.feature.home.cart.CartScreen
 import com.stephennnamani.burgerrestaurantapp.feature.home.categories.FoodMenuScreen
 import com.stephennnamani.burgerrestaurantapp.feature.home.product_overview.ProductOverviewScreen
+import com.example.fooddeliveryapp.feature.home.notifications.NotificationsScreen
 import org.koin.androidx.compose.koinViewModel
 import kotlin.collections.reverse
 import kotlin.toString
@@ -71,6 +72,10 @@ fun HomeScreen(
     startTab: HomeTab = HomeTab.Products,
     navigateToAuth: () -> Unit,
     navigateToProfile: () -> Unit,
+    navigateToLocations: () -> Unit,
+    navigateToRewards: () -> Unit,
+    navigateToOffers: () -> Unit,
+    navigateToContactUs: () -> Unit,
     navigateToAdminPanel: () -> Unit,
     navigateToDetails: (String) -> Unit,
     navigateToCheckout: (Double) -> Unit,
@@ -151,7 +156,10 @@ fun HomeScreen(
     ){
         CustomDrawer(
             onProfileClick = navigateToProfile,
-            onContactUsClick = {},
+            onLocationsClick = navigateToLocations,
+            onRewardsClick = navigateToRewards,
+            onOffersClick = navigateToOffers,
+            onContactUsClick = navigateToContactUs,
             onSignOutClick = {
                 viewModel.signOut(
                     onSuccess = navigateToAuth,
@@ -259,7 +267,9 @@ fun HomeScreen(
                                 }
                             )
                         }
-                        composable<Screens.Notifications> {}
+                        composable<Screens.Notifications> {
+                            NotificationsScreen()
+                        }
                         composable<Screens.Categories> {
                             FoodMenuScreen(
                                 onCategoryClick = { category ->

@@ -32,6 +32,9 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun CustomDrawer(
     onProfileClick: () -> Unit,
+    onLocationsClick: () -> Unit,
+    onRewardsClick: () -> Unit,
+    onOffersClick: () -> Unit,
     onContactUsClick: () -> Unit,
     onSignOutClick: () -> Unit,
     onAdminPanelClick: () -> Unit,
@@ -80,6 +83,9 @@ fun CustomDrawer(
                 onClick = {
                     when (item) {
                         DrawerItem.Profile -> onProfileClick()
+                        DrawerItem.Locations -> onLocationsClick()
+                        DrawerItem.Rewards -> onRewardsClick()
+                        DrawerItem.Offers -> onOffersClick()
                         DrawerItem.ContactUs -> onContactUsClick()
                         DrawerItem.SignOut -> onSignOutClick()
                         else -> {}

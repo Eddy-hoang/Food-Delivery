@@ -39,6 +39,18 @@ sealed class Screens {
     data object Profile: Screens()
 
     @Serializable
+    data object Locations: Screens()
+
+    @Serializable
+    data object Rewards: Screens()
+
+    @Serializable
+    data object Offers: Screens()
+
+    @Serializable
+    data object ContactUs: Screens()
+
+    @Serializable
     data object AdminPanel: Screens()
 
     @Serializable

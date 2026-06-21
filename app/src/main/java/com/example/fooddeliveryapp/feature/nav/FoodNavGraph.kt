@@ -13,8 +13,14 @@ import com.example.fooddeliveryapp.feature.admin_panel.manage_product.ManageProd
 import com.example.fooddeliveryapp.feature.splash.SplashScreen
 import com.example.fooddeliveryapp.feature.auth.AuthScreen
 import com.example.fooddeliveryapp.feature.home.HomeScreen
+import com.example.fooddeliveryapp.feature.home.categories.CategoryProductScreen
+import com.example.fooddeliveryapp.feature.payment.CheckoutScreen
 import com.example.fooddeliveryapp.feature.product_details.ProductDetailsScreen
 import com.example.fooddeliveryapp.feature.profile.ProfileScreen
+import com.example.fooddeliveryapp.feature.home.locations.LocationsScreen
+import com.example.fooddeliveryapp.feature.home.rewards.RewardsScreen
+import com.example.fooddeliveryapp.feature.home.offers.OffersScreen
+import com.example.fooddeliveryapp.feature.home.contact.ContactUsScreen
 
 const val HOME_TAB_KEY = "HOME_TAB_KEY"
 
@@ -74,6 +80,18 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                 navigateToProfile = {
                     navController.navigate(Screens.Profile)
                 },
+                navigateToLocations = {
+                    navController.navigate(Screens.Locations)
+                },
+                navigateToRewards = {
+                    navController.navigate(Screens.Rewards)
+                },
+                navigateToOffers = {
+                    navController.navigate(Screens.Offers)
+                },
+                navigateToContactUs = {
+                    navController.navigate(Screens.ContactUs)
+                },
                 navigateToAdminPanel = {
                     navController.navigate(Screens.AdminPanel)
                 },
@@ -94,6 +112,38 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
 
         composable<Screens.Profile> {
             ProfileScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                }
+            )
+        }
+        
+        composable<Screens.Locations> {
+            LocationsScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                }
+            )
+        }
+
+        composable<Screens.Rewards> {
+            RewardsScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                }
+            )
+        }
+
+        composable<Screens.Offers> {
+            OffersScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                }
+            )
+        }
+
+        composable<Screens.ContactUs> {
+            ContactUsScreen(
                 navigateBack = {
                     navController.navigateUp()
                 }
@@ -136,6 +186,33 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                 navigateToMenu = {
                     navController.setHomeTab(HomeTab.Categories)
                     navController.popBackStack()
+                }
+            )
+        }
+
+        composable<Screens.Checkout> {
+            val amount = it.toRoute<Screens.Checkout>().amount
+            CheckoutScreen(
+                totalAmount = amount,
+                navigateBack = {
+                    navController.navigateUp()
+                },
+                navigateCart = {
+                    navController.setHomeTab(HomeTab.Cart)
+                    navController.popBackStack(Screens.HomeGraph(), false)
+                }
+            )
+        }
+
+        composable<Screens.ProductCategoryScreen> {
+            val category = it.toRoute<Screens.ProductCategoryScreen>().category
+            CategoryProductScreen(
+                category = category,
+                onNavigateBack = {
+                    navController.navigateUp()
+                },
+                onProductClick = { productId ->
+                    navController.navigate(Screens.DetailsScreen(id = productId))
                 }
             )
         }

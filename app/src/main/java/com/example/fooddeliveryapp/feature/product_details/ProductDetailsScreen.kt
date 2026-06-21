@@ -5,7 +5,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,42 +70,48 @@ fun ProductDetailsScreen(
     navigateToCart: () -> Unit,
     navigateToCheckout: (Double) -> Unit,
     navigateToMenu: () -> Unit
-){
+) {
     val viewModel = koinViewModel<ProductDetailsViewModel>()
     val productState by viewModel.product.collectAsState()
     val quantity by viewModel.quantity.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
 
-    val context = LocalPlatformContext.current
+    val context = LocalContext.current
+
+    // Xử lý thông báo qua ActionMessage (từ StateFlow)
     LaunchedEffect(uiState.actionMessage) {
         uiState.actionMessage?.let { msg ->
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
     }
 
+    // Xử lý sự kiện từ SharedFlow
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is ProductDetailsEvent.NavigateToCheckout -> event.amount?.let { navigateToCheckout(it) }
-                is ProductDetailsEvent.ShowMessage ->
+                is ProductDetailsEvent.NavigateToCheckout -> {
+                    event.amount?.let { navigateToCheckout(it) }
+                }
+                is ProductDetailsEvent.ShowMessage -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
-
     }
 
+    // Dialog gợi ý thêm sản phẩm
     if (uiState.showSuggestedDialog) {
         AddMoreToCartDialog(
             suggestedProducts = uiState.suggestedProducts,
             initialItemTotal = uiState.addedCartTotal,
             onDismiss = viewModel::dismissSuggestedDialog,
-            onProductClick = {},
+            onProductClick = { /* TODO: xử lý click vào sản phẩm gợi ý nếu cần */ },
             selectedQuantities = uiState.suggestedQuantities,
             onIncrement = viewModel::incrementSuggested,
             onDecrement = viewModel::decrementSuggested,
             gotoCart = {
-                viewModel.confirmSuggestedSelectionToCart(onDone = { navigateToCart() })
-            },
+                viewModel.confirmSuggestedSelectionToCart(onDone = navigateToCart)
+            }
         )
     }
 
@@ -125,7 +131,7 @@ fun ProductDetailsScreen(
                     IconButton(onClick = navigateBack) {
                         Icon(
                             painter = painterResource(Resources.Icon.BackArrow),
-                            contentDescription = "Back arrow icon",
+                            contentDescription = "Back",
                             tint = IconPrimary
                         )
                     }
@@ -154,41 +160,46 @@ fun ProductDetailsScreen(
                 InfoCard(
                     image = Resources.Icon.Dog,
                     title = "Oops!",
-                    subtitle = message
+                    subtitle = message,
+                    // Có thể thêm nút retry nếu viewModel hỗ trợ
                 )
             },
             onSuccess = { product ->
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(paddingValues = paddingValues)
-                        .padding(12.dp)
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 12.dp, vertical = 12.dp)
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalPlatformContext.current)
-                            .data(product.productImage)
-                            .crossfade(enable = true)
-                            .build(),
-                        contentDescription = "Product image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .border(
-                                width = 1.dp,
-                                color = BorderIdle,
-                                shape = RoundedCornerShape(12.dp)
-                            ),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    // Phần thông tin chi tiết (có thể cuộn)
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        contentPadding = PaddingValues(vertical = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // 1. Đưa ảnh vào trong item đầu tiên của LazyColumn
+                        item {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalPlatformContext.current)
+                                    .data(product.productImage)
+                                    .crossfade(enable = true)
+                                    .build(),
+                                contentDescription = "Product image",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(250.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .border(
+                                        width = 1.dp,
+                                        color = BorderIdle,
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        // 2. Thẻ thông tin chi tiết
                         item {
                             ProductDetailsCard(
                                 title = product.title,
@@ -198,27 +209,37 @@ fun ProductDetailsScreen(
                                 allergyAdvice = product.allergyAdvice,
                                 ingredients = product.ingredients
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            DetailsBottomActions(
-                                onFavourite = viewModel::toggleFavourite,
-                                onBuyNow = viewModel::buyNow,
-                                onAddToCart = viewModel::addToCart,
-                                isFavourite = uiState.isFavourite
-                            )
                         }
                     }
-                    PrimaryButton(
-                        text = "Browse for More",
-                        icon = painterResource(Resources.Icon.Book),
-                        enabled = true,
-                        onClick = navigateToMenu
-                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 3. Phần nút bấm giữ cố định ở dưới (hoặc bạn có thể đưa vào item {} cuối nếu muốn nó cuộn đi luôn)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        DetailsBottomActions(
+                            isFavourite = uiState.isFavourite,
+                            onFavourite = viewModel::toggleFavourite,
+                            onAddToCart = viewModel::addToCart,
+                            onBuyNow = viewModel::buyNow
+                        )
+
+                        PrimaryButton(
+                            text = "Browse for More",
+                            icon = painterResource(Resources.Icon.Book),
+                            enabled = true,
+                            onClick = navigateToMenu
+                        )
+                    }
                 }
             }
         )
     }
 }
 
+// ==================== Các composable con ====================
 
 @Composable
 private fun ProductDetailsCard(
@@ -228,13 +249,14 @@ private fun ProductDetailsCard(
     price: Double,
     allergyAdvice: String,
     ingredients: String
-){
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(SurfaceDarker)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
+            // Hàng thông tin năng lượng và giá
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -243,44 +265,45 @@ private fun ProductDetailsCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         painter = painterResource(Resources.Icon.Flame),
-                        contentDescription = "Flame icon",
+                        contentDescription = "Calories",
                         modifier = Modifier.size(14.dp),
                         tint = Color.Unspecified
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${energyValue ?: 0}kcal",
+                        text = "${energyValue ?: 0} kcal",
                         fontSize = FontSize.REGULAR
                     )
                 }
                 Text(
-                    text = "${price}đ",
+                    text = String.format("%.0fđ", price), // Định dạng đẹp hơn
                     fontSize = FontSize.REGULAR,
                     fontWeight = FontWeight.Bold,
                     color = BrandBrown
                 )
             }
+
             Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = title,
                 fontSize = FontSize.REGULAR,
                 fontWeight = FontWeight.Bold
             )
+
             Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = description,
                 fontSize = FontSize.REGULAR,
+                color = TextPrimary.copy(alpha = 0.8f) // Làm mờ mô tả để nổi bật tiêu đề
             )
+
             Spacer(modifier = Modifier.height(8.dp))
-            DetailsInfoSection(
-                title = "Aller Advice",
-                body = allergyAdvice
-            )
+
+            DetailsInfoSection(title = "Allergy Advice", body = allergyAdvice)
             Spacer(modifier = Modifier.height(8.dp))
-            DetailsInfoSection(
-                title = "Ingredients",
-                body = ingredients,
-            )
+            DetailsInfoSection(title = "Ingredients", body = ingredients)
         }
     }
 }
@@ -289,7 +312,7 @@ private fun ProductDetailsCard(
 private fun DetailsInfoSection(
     title: String,
     body: String
-){
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -304,7 +327,8 @@ private fun DetailsInfoSection(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = body,
-                fontSize = FontSize.REGULAR
+                fontSize = FontSize.REGULAR,
+                color = TextPrimary.copy(alpha = 0.9f)
             )
         }
     }
@@ -316,12 +340,12 @@ private fun DetailsBottomActions(
     onFavourite: () -> Unit,
     onAddToCart: () -> Unit,
     onBuyNow: () -> Unit
-){
-    Row (
+) {
+    Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
-    ){
+    ) {
         OutlinedIconButton(
             onClick = onFavourite,
             modifier = Modifier.size(46.dp),
@@ -330,12 +354,14 @@ private fun DetailsBottomActions(
         ) {
             Icon(
                 painter = painterResource(
-                    if (isFavourite) Resources.Icon.HeartFilled else Resources.Icon.Heart),
-                contentDescription = "Heart icon",
+                    if (isFavourite) Resources.Icon.HeartFilled else Resources.Icon.Heart
+                ),
+                contentDescription = if (isFavourite) "Remove from favourites" else "Add to favourites",
                 modifier = Modifier.size(24.dp),
                 tint = if (isFavourite) BrandBrown else IconPrimary
             )
         }
+
         Button(
             onClick = onAddToCart,
             modifier = Modifier
@@ -353,11 +379,12 @@ private fun DetailsBottomActions(
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 painter = painterResource(Resources.Icon.ShoppingCart),
-                contentDescription = "Shopping cart icon",
+                contentDescription = "Cart",
                 modifier = Modifier.size(16.dp),
                 tint = IconPrimary
             )
         }
+
         Button(
             onClick = onBuyNow,
             modifier = Modifier
@@ -375,7 +402,7 @@ private fun DetailsBottomActions(
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 painter = painterResource(Resources.Icon.Dong),
-                contentDescription = "Dong Sterling icon",
+                contentDescription = "Price",
                 modifier = Modifier.size(16.dp),
                 tint = IconPrimary
             )

@@ -128,7 +128,7 @@ fun AddMoreToCartDialog(
                 colors = ButtonDefaults.buttonColors(BrandYellow)
             ){
                 Text(
-                    text = "Checkout (${"%.2f".format(grandTotal)}£)",
+                    text = "Checkout (${"%.2f".format(grandTotal)}đ)",
                     fontWeight = FontWeight.Bold,
                     fontSize = FontSize.REGULAR,
                     color = TextPrimary

@@ -53,6 +53,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fooddeliveryapp.feature.component.InfoCard
 import com.example.fooddeliveryapp.feature.payment.momo.MoMoCheckoutViewModel
 import com.example.fooddeliveryapp.feature.payment.momo.MoMoPaymentResult
+import com.example.fooddeliveryapp.feature.payment.paypal.CheckoutViewModel
+import com.example.fooddeliveryapp.feature.util.Alpha
 import com.example.fooddeliveryapp.feature.util.DisplayResult
 import com.example.fooddeliveryapp.feature.util.MessageUtils
 import com.example.fooddeliveryapp.feature.util.RequestState
@@ -62,11 +64,13 @@ import com.example.fooddeliveryapp.ui.theme.FontSize
 import com.example.fooddeliveryapp.ui.theme.IconPrimary
 import com.example.fooddeliveryapp.ui.theme.Resources
 import com.example.fooddeliveryapp.ui.theme.Surface
+import com.example.fooddeliveryapp.ui.theme.SurfaceBrand
 import com.example.fooddeliveryapp.ui.theme.SurfaceDarker
 import com.example.fooddeliveryapp.ui.theme.SurfaceLighter
 import com.example.fooddeliveryapp.ui.theme.TextPrimary
 import com.example.fooddeliveryapp.ui.theme.TextWhite
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
+import com.stephennnamani.burgerrestaurantapp.feature.payment.DeliveryFormatter
 import org.koin.androidx.compose.koinViewModel
 
 enum class PaymentMethod {
@@ -128,7 +132,7 @@ fun CheckoutScreen(
                 },
                 actions = {
                     Text(
-                        text = "£${"%.2f".format(totalAmount)}",
+                        text = "${"%.2f".format(totalAmount)}đ",
                         fontFamily = oswaldVariableFont(),
                         fontSize = FontSize.MEDIUM,
                         fontWeight = FontWeight.Bold,
@@ -179,9 +183,23 @@ fun CheckoutScreen(
                 }
             }
 
-            // ... (Phần DeliveryDetails giữ nguyên như cũ)
             checkoutUiState.delivery.DisplayResult(
-                onLoading = { Text("Loading delivery info...") },
+                onLoading = {
+                    DeliveryDetailsCard(
+                        address = "Loading...",
+                        postCode = "Loading...",
+                        onEditAddress = {},
+                        onEditPostcode = {}
+                    )
+                },
+                onError = {
+                    DeliveryDetailsCard(
+                        address = "Unknown",
+                        postCode = "Unknown",
+                        onEditAddress = {},
+                        onEditPostcode = {}
+                    )
+                },
                 onSuccess = { delivery ->
                     DeliveryDetailsCard(
                         address = delivery.addressLine,
@@ -195,7 +213,7 @@ fun CheckoutScreen(
             Button(
                 onClick = {
                     if (method == PaymentMethod.Card) {
-                        // Logic cho Card
+                        // Logic cho Card (Stub)
                         return@Button
                     }
                     moMoVm.startMoMoPayment(
@@ -226,7 +244,7 @@ private fun MoMoSection(state: RequestState<MoMoPaymentResult>) {
     state.DisplayResult(
         onIdle = {
             InfoCard(
-                image = Resources.Image.MomoLogo, // Hãy đảm bảo bạn có logo MoMo trong Resources
+                image = Resources.Image.MomoLogo,
                 title = "MoMo sẵn sàng",
                 subtitle = "Nhấn XÁC NHẬN & THANH TOÁN để tiếp tục."
             )
@@ -281,8 +299,6 @@ private fun PaymentMethodToggle(
     }
 }
 
-// ... (Các Composable phụ trợ khác như TogglePill, CardPaymentForm, v.v. giữ nguyên hoặc cập nhật nhẹ)
-
 @Composable
 private fun TogglePill(
     text: String,
@@ -316,8 +332,210 @@ private fun TogglePill(
 }
 
 @Composable
-private fun CardPaymentForm(savedCard: Boolean, onToggleSave: (Boolean) -> Unit) { /* ... Giữ nguyên nội dung cũ ... */ }
+private fun CardPaymentForm(
+    savedCard: Boolean,
+    onToggleSave: (Boolean) -> Unit
+) {
+    Text(
+        text = "CARD NUMBER",
+        fontSize = FontSize.REGULAR,
+        color = TextPrimary.copy(alpha = Alpha.HALF)
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    OutlinedTextField(
+        value = "1234 5678 9012 3456",
+        onValueChange = {},
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true,
+        trailingIcon = {
+            Icon(
+                painter = painterResource(Resources.Icon.MasterCard),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(24.dp)
+            )
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedTextColor = TextPrimary
+        )
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+        text = "NAME ON CARD",
+        fontSize = FontSize.REGULAR,
+        color = TextPrimary.copy(alpha = Alpha.HALF)
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    OutlinedTextField(
+        value = "Stephen Nnamani",
+        onValueChange = {},
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedTextColor = TextPrimary
+        )
+    )
+
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+        text = "EXPIRY DATE",
+        fontSize = FontSize.REGULAR,
+        color = TextPrimary.copy(alpha = Alpha.HALF)
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        DropdownStub(value = "01", modifier = Modifier.weight(1f))
+        DropdownStub(value = "26", modifier = Modifier.weight(1f))
+    }
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+        text = "CVV",
+        fontSize = FontSize.REGULAR,
+        color = TextPrimary.copy(alpha = Alpha.HALF)
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        CvvBox(value = "6")
+        CvvBox(value = "1")
+        CvvBox(value = "2")
+    }
+    Spacer(modifier = Modifier.height(12.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "Save card details",
+            fontSize = FontSize.REGULAR,
+            color = TextPrimary
+        )
+        Switch(
+            checked = savedCard,
+            onCheckedChange = onToggleSave,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = SurfaceBrand,
+                uncheckedTrackColor = SurfaceDarker,
+                checkedThumbColor = Surface,
+                uncheckedThumbColor = Surface,
+                checkedBorderColor = SurfaceBrand,
+                uncheckedBorderColor = SurfaceDarker
+            )
+        )
+    }
+}
+
 @Composable
-private fun DeliveryDetailsCard(address: String, postCode: String?, onEditAddress: () -> Unit, onEditPostcode: () -> Unit) { /* ... Giữ nguyên nội dung cũ ... */ }
+private fun DropdownStub(
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.width(120.dp),
+        singleLine = true,
+        trailingIcon = {
+            Icon(
+                painter = painterResource(Resources.Icon.Dropdown),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(24.dp)
+            )
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = BrandYellow,
+            unfocusedTextColor = TextPrimary
+        )
+    )
+}
+
 @Composable
-private fun DeliveryRow(value: String, onEdit: () -> Unit) { /* ... Giữ nguyên nội dung cũ ... */ }
+private fun CvvBox(value: String) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.width(54.dp),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = BrandYellow,
+            unfocusedTextColor = TextPrimary
+        )
+    )
+}
+
+@Composable
+private fun DeliveryDetailsCard(
+    address: String,
+    postCode: String?,
+    onEditAddress: () -> Unit,
+    onEditPostcode: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(Surface)
+    ) {
+        Column(
+            modifier = Modifier
+                .border(
+                    1.dp,
+                    BrandBrown,
+                    RoundedCornerShape(12.dp)
+                )
+                .padding(12.dp)
+        ) {
+            Text(
+                text = "Delivery details:",
+                fontSize = FontSize.REGULAR,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.alpha(0.8f)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            DeliveryRow(value = address, onEdit = onEditAddress)
+            Spacer(modifier = Modifier.height(8.dp))
+            DeliveryRow(value = postCode ?: "Unknown", onEdit = onEditPostcode)
+        }
+    }
+}
+
+@Composable
+private fun DeliveryRow(
+    value: String,
+    onEdit: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50.dp))
+            .background(SurfaceLighter)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = value,
+            fontSize = FontSize.REGULAR,
+            color = TextPrimary,
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        OutlinedButton(
+            onClick = onEdit,
+            shape = RoundedCornerShape(50.dp),
+            modifier = Modifier.width(100.dp),
+            colors = ButtonDefaults.outlinedButtonColors(Surface)
+        ) {
+            Text(
+                text = "Edit",
+                fontSize = FontSize.REGULAR,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+            )
+        }
+    }
+}
