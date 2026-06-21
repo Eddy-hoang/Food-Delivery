@@ -53,7 +53,6 @@ fun ProductOverviewScreen(
     val discountedProducts by viewModel.discountedProducts.collectAsState()
     val categoryProducts by viewModel.categoryProducts.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
-
     val favouriteIdsStates by viewModel.favouriteIds.collectAsState()
     val favouriteIds = favouriteIdsStates.getSuccessDataOrNull().orEmpty()
 
@@ -80,7 +79,7 @@ fun ProductOverviewScreen(
                     MainProductCard(
                         title = product.title,
                         energyValue = "${product.energyValue ?: 0}kcal",
-                        price = "£${"%.2f".format(product.price)}",
+                        price = "${"%.2f".format(product.price)}đ",
                         imageUrl = product.productImage,
                         paused = heroPaused,
                         onClick = { onProductClick(product.id) },

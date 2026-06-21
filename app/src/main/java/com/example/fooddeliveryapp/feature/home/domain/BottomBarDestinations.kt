@@ -18,12 +18,12 @@ enum class BottomBarDestinations(
         title = "Cart",
         screen = Screens.Cart
     ),
-    NotificationScreen(
+    NotificationsScreen(
         icon = Resources.Icon.Bell,
         title = "Notification",
         screen = Screens.Notifications
     ),
-    CategoriesSceen(
+    CategoriesScreen(
         icon = Resources.Icon.Categories,
         title = "Categories",
         screen = Screens.Categories

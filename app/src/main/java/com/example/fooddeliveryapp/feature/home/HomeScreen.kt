@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -57,8 +58,12 @@ import com.example.fooddeliveryapp.ui.theme.IconPrimary
 import com.example.fooddeliveryapp.ui.theme.Surface
 import com.example.fooddeliveryapp.ui.theme.TextPrimary
 import com.example.fooddeliveryapp.ui.theme.oswaldVariableFont
+import com.stephennnamani.burgerrestaurantapp.feature.home.cart.CartScreen
+import com.stephennnamani.burgerrestaurantapp.feature.home.categories.FoodMenuScreen
 import com.stephennnamani.burgerrestaurantapp.feature.home.product_overview.ProductOverviewScreen
 import org.koin.androidx.compose.koinViewModel
+import kotlin.collections.reverse
+import kotlin.toString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,34 +76,58 @@ fun HomeScreen(
     navigateToCheckout: (Double) -> Unit,
     navigateToMenu: () -> Unit,
     navigateToProductCategory: (String) -> Unit
-) {
+){
     val navController = rememberNavController()
-    val currentRouter = navController.currentBackStackEntryAsState()
+    val currentRoute = navController.currentBackStackEntryAsState()
 
     val viewModel = koinViewModel<HomeViewModel>()
     val isAdmin by viewModel.isAdmin.collectAsState()
     val context = LocalContext.current
 
-    // Lấy thông tin khách hàng real-time từ HomeViewModel
-    val customer = viewModel.customerState
+    val cartBadgeState by viewModel.cartBadgeCount.collectAsState()
+    val cartCount = cartBadgeState.getSuccessDataOrNull() ?: 0
 
-    val selectedDestinaion by remember {
+    val selectedDestination by remember {
         derivedStateOf {
-            val route = currentRouter.value?.destination?.route.toString()
+            val route = currentRoute.value?.destination?.route.toString()
             when {
                 route.contains(BottomBarDestinations.ProductOverviewScreen.screen.toString()) -> BottomBarDestinations.ProductOverviewScreen
                 route.contains(BottomBarDestinations.CartScreen.screen.toString()) -> BottomBarDestinations.CartScreen
-                route.contains(BottomBarDestinations.NotificationScreen.screen.toString()) -> BottomBarDestinations.NotificationScreen
-                route.contains(BottomBarDestinations.CategoriesSceen.screen.toString()) -> BottomBarDestinations.CategoriesSceen
+                route.contains(BottomBarDestinations.NotificationsScreen.screen.toString()) -> BottomBarDestinations.NotificationsScreen
+                route.contains(BottomBarDestinations.CategoriesScreen.screen.toString()) -> BottomBarDestinations.CategoriesScreen
                 else -> BottomBarDestinations.ProductOverviewScreen
             }
+        }
+    }
+
+    val startDestination = remember(startTab) {
+        when(startTab) {
+            HomeTab.Products -> Screens.ProductOverviewScreen
+            HomeTab.Cart -> Screens.Cart
+            HomeTab.Notifications -> Screens.Notifications
+            HomeTab.Categories -> Screens.Categories
+        }
+    }
+
+    LaunchedEffect(startTab) {
+        val destinations = when(startTab){
+            HomeTab.Products -> Screens.ProductOverviewScreen
+            HomeTab.Cart -> Screens.Cart
+            HomeTab.Notifications -> Screens.Notifications
+            HomeTab.Categories -> Screens.Categories
+        }
+
+        navController.navigate(destinations){
+            launchSingleTop = true
+            restoreState = true
+            popUpTo<Screens.ProductOverviewScreen> { saveState = true }
         }
     }
 
     val screenWidth = remember { getScreenWidth() }
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
 
-    val offsetValue by remember { derivedStateOf { (screenWidth / 1.5).dp }}
+    val offsetValue by remember { derivedStateOf { (screenWidth / 1.8).dp } }
 
     val animatedOffset by animateDpAsState(
         targetValue = if (drawerState.isOpened()) offsetValue else 0.dp
@@ -107,12 +136,9 @@ fun HomeScreen(
     val animatedScale by animateFloatAsState(
         targetValue = if (drawerState.isOpened()) 0.9f else 1f
     )
-
     val animatedBackground by animateColorAsState(
         targetValue = if (drawerState.isOpened()) BrandBrown else Surface
     )
-
-    // Sửa lỗi chính tả animatedRaldius -> animatedRadius
     val animatedRadius by animateDpAsState(
         targetValue = if (drawerState.isOpened()) 20.dp else 0.dp
     )
@@ -139,7 +165,7 @@ fun HomeScreen(
                 )
             },
             onAdminPanelClick = navigateToAdminPanel,
-            isAdmin = isAdmin,
+            isAdmin = isAdmin
         )
         Box(
             modifier = Modifier
@@ -160,7 +186,7 @@ fun HomeScreen(
                     CenterAlignedTopAppBar(
                         title = {
                             AnimatedContent(
-                                targetState = selectedDestinaion
+                                targetState = selectedDestination
                             ) { destination ->
                                 Text(
                                     text = destination.title,
@@ -168,7 +194,6 @@ fun HomeScreen(
                                     fontSize = FontSize.LARGE,
                                     color = TextPrimary
                                 )
-
                             }
                         },
                         navigationIcon = {
@@ -178,13 +203,13 @@ fun HomeScreen(
                                 AnimatedContent(
                                     targetState = drawerState
                                 ) { drawer ->
-                                    if(!drawer.isOpened()){
+                                    if (!drawer.isOpened()){
                                         Icon(
                                             painter = painterResource(R.drawable.menu),
                                             contentDescription = "Menu icon",
                                             tint = IconPrimary
                                         )
-                                    }else{
+                                    } else {
                                         Icon(
                                             painter = painterResource(R.drawable.close),
                                             contentDescription = "Menu icon",
@@ -213,25 +238,44 @@ fun HomeScreen(
                     NavHost(
                         modifier = Modifier.weight(1f),
                         navController = navController,
-                        startDestination = Screens.ProductOverviewScreen
-                    ) {
+                        startDestination = startDestination
+                    ){
                         composable<Screens.ProductOverviewScreen> {
                             ProductOverviewScreen (
                                 onProductClick = navigateToDetails
                             )
                         }
-                        composable<Screens.Cart> { }
-                        composable<Screens.Notifications> { }
-                        composable<Screens.Categories> { }
+                        composable<Screens.Cart> {
+                            CartScreen(
+                                navigateToCheckout = { amount ->
+                                    navigateToCheckout(amount)
+                                },
+                                navigateToMenu = {
+                                    navController.navigate(Screens.Categories) {
+                                        launchSingleTop = true
+                                        restoreState = true
+                                        popUpTo<Screens.Cart> { saveState = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable<Screens.Notifications> {}
+                        composable<Screens.Categories> {
+                            FoodMenuScreen(
+                                onCategoryClick = { category ->
+                                    navigateToProductCategory(category.title)
+                                }
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Box(
                         modifier = Modifier.padding(12.dp)
                     ) {
                         BurgersBottomBar(
-                            selected = selectedDestinaion,
-                            onSelect = { destination ->
-                                navController.navigate(destination.screen) {
+                            selected = selectedDestination,
+                            onSelect = { destinations ->
+                                navController.navigate(destinations.screen){
                                     launchSingleTop = true
                                     popUpTo<Screens.ProductOverviewScreen> {
                                         saveState = true
@@ -239,16 +283,19 @@ fun HomeScreen(
                                     }
                                     restoreState = true
                                 }
-                            }
+                            },
+                            cartCount = cartCount
                         )
                     }
                 }
+
             }
         }
     }
-}
 
-fun getScreenWidth(): Float{
+
+}
+fun getScreenWidth(): Float {
     return Resources.getSystem().displayMetrics.widthPixels /
             Resources.getSystem().displayMetrics.density
 }

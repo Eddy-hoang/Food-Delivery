@@ -1,6 +1,9 @@
 package com.example.fooddeliveryapp.feature.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -10,7 +13,18 @@ import com.example.fooddeliveryapp.feature.admin_panel.manage_product.ManageProd
 import com.example.fooddeliveryapp.feature.splash.SplashScreen
 import com.example.fooddeliveryapp.feature.auth.AuthScreen
 import com.example.fooddeliveryapp.feature.home.HomeScreen
+import com.example.fooddeliveryapp.feature.product_details.ProductDetailsScreen
 import com.example.fooddeliveryapp.feature.profile.ProfileScreen
+
+const val HOME_TAB_KEY = "HOME_TAB_KEY"
+
+private fun NavController.setHomeTab(tab: HomeTab) {
+    try {
+        val homeEntry = getBackStackEntry<Screens.HomeGraph>()
+        homeEntry.savedStateHandle[HOME_TAB_KEY] = tab
+    } catch (e: IllegalArgumentException) {
+    }
+}
 
 @Composable
 fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
@@ -44,8 +58,14 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
             )
         }
 
-        composable<Screens.HomeGraph> {
+        composable<Screens.HomeGraph> { entry ->
+            val args = entry.toRoute<Screens.HomeGraph>()
+
+            // Listen for incoming tab switch requests
+            val requestedTabFlow = entry.savedStateHandle.getStateFlow(HOME_TAB_KEY, args.start)
+            val requestStateTab by requestedTabFlow.collectAsState()
             HomeScreen(
+                startTab = requestStateTab,
                 navigateToAuth = {
                     navController.navigate(Screens.AuthScreen) {
                         popUpTo<Screens.HomeGraph> { inclusive = true }
@@ -57,11 +77,18 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                 navigateToAdminPanel = {
                     navController.navigate(Screens.AdminPanel)
                 },
-                startTab = HomeTab.Products,  // nếu HomeScreen yêu cầu Int; nếu là nullable thì truyền null
-                navigateToDetails = { /* chưa implement, tạm để trống */ },
-                navigateToCheckout = { /* chưa implement */ },
-                navigateToMenu = { /* chưa implement */ },
-                navigateToProductCategory = { /* chưa implement */ }
+                navigateToDetails = { productId ->
+                    navController.navigate(Screens.DetailsScreen(id = productId))
+                },
+                navigateToCheckout = { amount ->
+                    navController.navigate(Screens.Checkout(amount = amount))
+                },
+                navigateToMenu = {
+                    navController.setHomeTab(HomeTab.Categories)
+                },
+                navigateToProductCategory = { categoryTitle ->
+                    navController.navigate(Screens.ProductCategoryScreen(category = categoryTitle))
+                },
             )
         }
 
@@ -78,7 +105,7 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                 navigateBack = {
                     navController.navigateUp()
                 },
-                navigateToManageProduct = {id ->
+                navigateToManageProduct = { id ->
                     navController.navigate(Screens.ManageProduct(id = id))
                 }
             )
@@ -90,6 +117,25 @@ fun FoodNavGraph(startDeprecated: Screens = Screens.SplashScreen) {
                 id = id,
                 navigateBack = {
                     navController.navigateUp()
+                }
+            )
+        }
+
+        composable<Screens.DetailsScreen> {
+            ProductDetailsScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                },
+                navigateToCart = {
+                    navController.setHomeTab(HomeTab.Cart)
+                    navController.navigateUp()
+                },
+                navigateToCheckout = { amount ->
+                    navController.navigate(Screens.Checkout(amount = amount))
+                },
+                navigateToMenu = {
+                    navController.setHomeTab(HomeTab.Categories)
+                    navController.popBackStack()
                 }
             )
         }

@@ -6,6 +6,7 @@ import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.example.fooddeliveryapp.core.data.domain.CustomerRepository
+import com.example.fooddeliveryapp.core.data.models.Cart
 import com.example.fooddeliveryapp.core.data.models.Country
 import com.example.fooddeliveryapp.core.data.models.Customer
 import com.example.fooddeliveryapp.core.data.models.PhoneNumber
@@ -16,9 +17,12 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.snapshots
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -26,6 +30,7 @@ import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.resume
 
 private const val CUSTOMER_COLLECTION = "customer"
+private const val CART_SUBCOLLECTION = "cart"
 private const val FAVOURITE_SUBCOLLECTION = "favourite"
 
 
@@ -60,7 +65,7 @@ class CustomerRepoImpl : CustomerRepository {
         }
     }
 
-    override fun readCustomerFlow(): Flow<RequestState<Customer>>  = channelFlow {
+    override fun readCustomerFlow(): Flow<RequestState<Customer>> = channelFlow {
         try {
             val userId = getCurrentUserId()
             if (userId != null) {
@@ -278,20 +283,92 @@ class CustomerRepoImpl : CustomerRepository {
         }
     }
 
-//    override suspend fun addToCart(
-//        productId: String,
-//        productTitle: String,
-//        quantityToAdd: Int
-//    ): RequestState<Unit> {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override suspend fun removeFromCart(
-//        productId: String,
-//        quantityToRemove: Int
-//    ): RequestState<Unit> {
-//        TODO("Not yet implemented")
-//    }
+    override suspend fun addToCart(
+        productId: String,
+        productTitle: String,
+        quantityToAdd: Int
+    ): RequestState<Unit> {
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("User not available.")
+            if (productId.isBlank()) return RequestState.Error("Invalid product id.")
+            if (quantityToAdd <= 0) return RequestState.Error("Quantity must be at least 1.")
+
+            val cartDoc = Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(CART_SUBCOLLECTION)
+                .document(productId)
+
+            Firebase.firestore.runTransaction { trx ->
+                val snap = trx.get(cartDoc)
+                if (snap.exists()) {
+                    trx.update(
+                        cartDoc,
+                        mapOf(
+                            "quantity" to FieldValue.increment(quantityToAdd.toLong()),
+                            "updatedAt" to FieldValue.serverTimestamp()
+                        )
+                    )
+                } else {
+                    trx.set(
+                        cartDoc,
+                        mapOf(
+                            "productId" to productId,
+                            "quantity" to quantityToAdd,
+                            "title" to productTitle,
+                            "createdAt" to FieldValue.serverTimestamp(),
+                            "updatedAd" to FieldValue.serverTimestamp()
+                        )
+                    )
+                }
+                Unit
+            }.await()
+            RequestState.Success(Unit)
+        } catch (e: Exception) {
+            RequestState.Error("Failed to add item to cart: ${e.message}")
+        }
+    }
+
+    override suspend fun removeFromCart(
+        productId: String,
+        quantityToRemove: Int
+    ): RequestState<Unit> {
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("User not available.")
+            if (productId.isBlank()) return RequestState.Error("Invalid product id.")
+            if (quantityToRemove <= 0) return RequestState.Error("Quantity must be at least 1.")
+
+            val cartDoc = Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(CART_SUBCOLLECTION)
+                .document(productId)
+
+            Firebase.firestore.runTransaction { trx ->
+                val snap = trx.get(cartDoc)
+                if (!snap.exists()) return@runTransaction
+
+                val currentQty = (snap.getLong("quantity") ?: 0L).toInt()
+                val newQty = currentQty -quantityToRemove
+                if (newQty <= 0) {
+                    trx.delete(cartDoc)
+                } else {
+                    trx.update(
+                        cartDoc,
+                        mapOf(
+                            "quantity" to quantityToRemove,
+                            "createdAt" to FieldValue.serverTimestamp(),
+                        )
+                    )
+                }
+                Unit
+            }.await()
+            RequestState.Success(Unit)
+        } catch (e: Exception) {
+            RequestState.Error("Failed to remove item from cart: ${e.message}")
+        }
+    }
+
 
     override suspend fun toggleFavourite(productId: String): RequestState<Boolean> {
         return try {
@@ -341,16 +418,116 @@ class CustomerRepoImpl : CustomerRepository {
 
 
             RequestState.Success(isFavDoc.exists())
-        } catch (e: Exception){
+        } catch (e: Exception) {
             RequestState.Error("Failed to read favourite state: ${e.message}")
+        }
+    }
+    override fun readBadgeCountFlow(): Flow<RequestState<Int>> = channelFlow {
+        try {
+            val uid = getCurrentUserId()
+            if (uid.isNullOrBlank()){
+                send(RequestState.Error("User not available."))
+                return@channelFlow
+            }
+            send(RequestState.Loading)
+            Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(CART_SUBCOLLECTION)
+                .snapshots()
+                .collectLatest { snapshots ->
+                    send(RequestState.Success(snapshots.size()))
+                }
+        } catch (e: Exception){
+            RequestState.Error("Failed to read size items in the cart.: ${e.message}")
+        }
+    }
+
+    override fun readCartFlow(): Flow<RequestState<List<Cart>>> = callbackFlow {
+        val uid = getCurrentUserId()
+        if (uid == null) {
+            trySend(RequestState.Error("User not available."))
+            close()
+            return@callbackFlow
+        }
+
+        trySend(RequestState.Loading)
+        val listener = Firebase.firestore
+            .collection(CUSTOMER_COLLECTION)
+            .document(uid)
+            .collection(CART_SUBCOLLECTION)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null){
+                    trySend(RequestState.Error(error.message ?: "Failed to read cart."))
+                    return@addSnapshotListener
+                }
+                val docs = snapshot?.documents.orEmpty()
+                val cart = docs.mapNotNull { documentSnapshot ->
+                    val productId = documentSnapshot.getString("productId") ?: documentSnapshot.id
+                    val quantity = (documentSnapshot.getLong("quantity") ?: 0L).toInt()
+                    if (quantity <= 0) null else Cart(productId = productId, quantity = quantity)
+                }
+                trySend(RequestState.Success(cart))
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun deleteCartItem(productId: String): RequestState<Unit> {
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("User not available.")
+            if (productId.isBlank()) return RequestState.Error("Invalid product id.")
+
+            Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(CART_SUBCOLLECTION)
+                .document(productId)
+                .delete()
+                .await()
+            RequestState.Success(Unit)
+        } catch (e: Exception) {
+            RequestState.Error("Failed to delete cart item: ${e.message}")
+        }
+    }
+
+    override suspend fun setCartQuantity(
+        productId: String,
+        newQuantity: Int
+    ): RequestState<Unit> {
+        return try {
+            val uid = getCurrentUserId() ?: return RequestState.Error("User not available.")
+            if (productId.isBlank()) return RequestState.Error("Invalid product id.")
+
+            val cartQuantity = newQuantity.coerceIn(0, 99)
+            val cartDoc = Firebase.firestore
+                .collection(CUSTOMER_COLLECTION)
+                .document(uid)
+                .collection(CART_SUBCOLLECTION)
+                .document(productId)
+
+            if (cartQuantity == 0){
+                cartDoc.delete()
+            } else {
+                cartDoc.set(
+                    mapOf(
+                        "productId" to productId,
+                        "quantity" to cartQuantity,
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    ),
+                    SetOptions.merge()
+                ).await()
+            }
+            RequestState.Success(Unit)
+        } catch (e: Exception) {
+            RequestState.Error("Failed to update cart quantity: ${e.message}")
         }
     }
 
 
-    override fun readFavouriteIdFlow(): Flow<RequestState<Set<String>>>  = channelFlow {
+    override fun readFavouriteIdFlow(): Flow<RequestState<Set<String>>> = channelFlow {
         try {
             val uid = getCurrentUserId()
-            if (uid.isNullOrBlank()){
+            if (uid.isNullOrBlank()) {
                 send(RequestState.Error("User not available."))
                 return@channelFlow
             }
@@ -364,41 +541,8 @@ class CustomerRepoImpl : CustomerRepository {
                     val ids = snapshots.documents.map { it.id }.toSet()
                     send(RequestState.Success(ids))
                 }
-        } catch (e: Exception){
+        } catch (e: Exception) {
             RequestState.Error("Failed to read favourites: ${e.message}")
         }
     }
-
-
-//    override fun readBadgeCountFlow(): Flow<RequestState<Int>> = channelFlow {
-//        try {
-//            val uid = getCurrentUserId()
-//            if (uid.isNullOrBlank()){
-//                send(RequestState.Error("User not available."))
-//                return@channelFlow
-//            }
-//            send(RequestState.Loading)
-//            Firebase.firestore
-//                .collection(com.stephennnamani.burgerrestaurantapp.core.data.repoImpl.CUSTOMER_COLLECTION)
-//                .document(uid)
-//                .collection(CART_SUBCOLLECTION)
-//                .snapshots()
-//                .collectLatest { snapshots ->
-//                    send(RequestState.Success(snapshots.size()))
-//                }
-//        } catch (e: Exception){
-//            RequestState.Error("Failed to read size items in the cart.: ${e.message}")
-//        }
-//    }
-
-//    override suspend fun deleteCartItem(productId: String): RequestState<Unit> {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override suspend fun setCartQuantity(
-//        productId: String,
-//        newQuantity: Int
-//    ): RequestState<Unit> {
-//        TODO("Not yet implemented")
-//    }
 }

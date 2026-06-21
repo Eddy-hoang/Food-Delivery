@@ -1,6 +1,7 @@
 package com.example.fooddeliveryapp.core.data.domain
 
 import android.net.Uri
+import com.example.fooddeliveryapp.core.data.models.Cart
 import com.example.fooddeliveryapp.core.data.models.Customer
 import com.example.fooddeliveryapp.feature.util.RequestState
 import com.google.firebase.auth.FirebaseUser
@@ -28,25 +29,25 @@ interface CustomerRepository {
 
 
     //Cart functions
-//    suspend fun addToCart(
-//        productId: String,
-//        productTitle: String,
-//        quantityToAdd: Int
-//    ): RequestState<Unit>
-//
-//    suspend fun removeFromCart(
-//        productId: String,
-//        quantityToRemove: Int
-//    ): RequestState<Unit>
+    suspend fun addToCart(
+        productId: String,
+        productTitle: String,
+        quantityToAdd: Int
+    ): RequestState<Unit>
+
+    suspend fun removeFromCart(
+        productId: String,
+        quantityToRemove: Int
+    ): RequestState<Unit>
 
     suspend fun toggleFavourite(productId: String): RequestState<Boolean>
     suspend fun isFavourite(productId: String): RequestState<Boolean>
 
     fun readFavouriteIdFlow(): Flow<RequestState<Set<String>>>
 
-//    fun readBadgeCountFlow(): Flow<RequestState<Int>>
-//
-//    //fun readCartFlow(): Flow<RequestState<List<Cart>>>
-//    suspend fun deleteCartItem(productId: String): RequestState<Unit>
-//    suspend fun setCartQuantity(productId: String, newQuantity: Int): RequestState<Unit>
+    fun readBadgeCountFlow(): Flow<RequestState<Int>>
+
+    fun readCartFlow(): Flow<RequestState<List<Cart>>>
+    suspend fun deleteCartItem(productId: String): RequestState<Unit>
+    suspend fun setCartQuantity(productId: String, newQuantity: Int): RequestState<Unit>
 }

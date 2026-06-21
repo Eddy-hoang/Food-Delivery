@@ -8,6 +8,10 @@ object Resources {
         val Minus = R.drawable.minus
         val SignIn = R.drawable.log_in
         val SignOut = R.drawable.log_out
+        val Card = R.drawable.credit_card
+
+        val MasterCard = R.drawable.master_card
+
         val Unlock = R.drawable.unlock
         val Search = R.drawable.search
         val Person = R.drawable.user
@@ -41,7 +45,11 @@ object Resources {
         val Fries = R.drawable.french_fries
         val Drink = R.drawable.drinks
 
+        val Dong = R.drawable.dong
         val Flame = R.drawable.fire
+        val Dropdown = R.drawable.arrow_dropdown
+        val MomoLogo = R.drawable.momo_logo_app
+
     }
     object Image {
         val ShoppingCart = R.drawable.shopping_cart_image
@@ -49,5 +57,7 @@ object Resources {
         val Cat = R.drawable.cat
         val GoogleLogo = R.drawable.google_logo
         val PaypalLogo = R.drawable.paypal_logo
+        val MomoLogo = R.drawable.momo_logo_app
+
     }
 }

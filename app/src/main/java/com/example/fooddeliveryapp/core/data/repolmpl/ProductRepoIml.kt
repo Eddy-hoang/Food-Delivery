@@ -12,23 +12,34 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 
 class ProductRepoImpl: ProductRepository {
-    private  fun DocumentSnapshot.toProduct(): Product {
-        return Product(
-            id = id,
-            createdAt = getLong("createdAt") ?: 0L,
-            title = getString("title").orEmpty(),
-            description = getString("description").orEmpty(),
-            category = getString("category").orEmpty(),
-            allergyAdvice = getString("allergyAdvice").orEmpty(),
-            energyValue = getLong("energyValue")?.toInt(),
-            ingredients = getString("ingredients").orEmpty(),
-            price = getDouble("price") ?: 0.0,
-            productImage = getString("productImage").orEmpty(),
-            isNew = getBoolean("new") ?: false,
-            isPopular = getBoolean("popular") ?: false,
-            isDiscounted = getBoolean("discounted") ?: false
-        )
+    private fun DocumentSnapshot.toProduct(): Product? {
+        return try {
+            Product(
+                id = id,
+                // Xử lý createdAt an toàn (chấp nhận cả Long và Timestamp)
+                createdAt = when (val value = get("createdAt")) {
+                    is com.google.firebase.Timestamp -> value.seconds * 1000
+                    is Long -> value
+                    else -> 0L
+                },
+                title = getString("title").orEmpty(),
+                description = getString("description").orEmpty(),
+                category = getString("category").orEmpty(),
+                allergyAdvice = getString("allergyAdvice").orEmpty(),
+                energyValue = getLong("energyValue")?.toInt(),
+                ingredients = getString("ingredients").orEmpty(),
+                // Xử lý price an toàn (chấp nhận cả Int, Long, Double)
+                price = (get("price") as? Number)?.toDouble() ?: 0.0,
+                productImage = getString("productImage").orEmpty(),
+                isNew = getBoolean("new") ?: false,
+                isPopular = getBoolean("popular") ?: false,
+                isDiscounted = getBoolean("discounted") ?: false
+            )
+        } catch (e: Exception) {
+            null
+        }
     }
+
     override fun readNewProducts(): Flow<RequestState<List<Product>>> = channelFlow {
         try {
             send(RequestState.Loading)
@@ -38,11 +49,11 @@ class ProductRepoImpl: ProductRepository {
                 .snapshots()
                 .collectLatest { snapshots ->
                     val products = snapshots.documents
-                        .map { it.toProduct() }
+                        .mapNotNull { it.toProduct() }
                         .map { it.copy(title = it.title.uppercase()) }
                     send(RequestState.Success(products))
                 }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             send(RequestState.Error("Error reading new products: ${e.message}"))
         }
     }
@@ -56,11 +67,11 @@ class ProductRepoImpl: ProductRepository {
                 .snapshots()
                 .collectLatest { snapshots ->
                     val products = snapshots.documents
-                        .map { it.toProduct() }
+                        .mapNotNull { it.toProduct() }
                         .map { it.copy(title = it.title.uppercase()) }
                     send(RequestState.Success(products))
                 }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             send(RequestState.Error("Error reading popular products: ${e.message}"))
         }
     }
@@ -74,16 +85,14 @@ class ProductRepoImpl: ProductRepository {
                 .snapshots()
                 .collectLatest { snapshots ->
                     val products = snapshots.documents
-                        .map { it.toProduct() }
+                        .mapNotNull { it.toProduct() }
                         .map { it.copy(title = it.title.uppercase()) }
                     send(RequestState.Success(products))
                 }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             send(RequestState.Error("Error reading discounted products: ${e.message}"))
         }
     }
-
-
 
     override fun readProductsByCategory(category: String): Flow<RequestState<List<Product>>> = channelFlow {
         try {
@@ -94,11 +103,11 @@ class ProductRepoImpl: ProductRepository {
                 .snapshots()
                 .collectLatest { snapshots ->
                     val products = snapshots.documents
-                        .map { it.toProduct() }
+                        .mapNotNull { it.toProduct() }
                         .map { it.copy(title = it.title.uppercase()) }
                     send(RequestState.Success(products))
                 }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             send(RequestState.Error("Error reading category products: ${e.message}"))
         }
     }
@@ -109,16 +118,19 @@ class ProductRepoImpl: ProductRepository {
             Firebase.firestore.collection("products")
                 .document(productId)
                 .snapshots()
-                .collectLatest { snapshots ->
-                    if (!snapshots.exists()){
+                .collectLatest { snapshot ->
+                    if (!snapshot.exists()) {
                         send(RequestState.Error("Product not found."))
                         return@collectLatest
                     }
-                    val products = snapshots.toProduct()
-                        .copy(title = snapshots.getString("title").orEmpty().uppercase())
-                    send(RequestState.Success(products))
+                    val product = snapshot.toProduct()
+                    if (product != null) {
+                        send(RequestState.Success(product.copy(title = product.title.uppercase())))
+                    } else {
+                        send(RequestState.Error("Failed to parse product data."))
+                    }
                 }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             send(RequestState.Error("Error reading product details: ${e.message}"))
         }
     }
